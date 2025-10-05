@@ -1,70 +1,410 @@
-# Getting Started with Create React App
+# Customer Consent Management UI
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based web application for managing customer consent preferences and compliance tracking for Sanlam Life Insurance Limited.
 
-## Available Scripts
+## 📋 Table of Contents
 
-In the project directory, you can run:
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Setup Instructions](#setup-instructions)
+- [AWS Deployment](#aws-deployment)
+- [API Configuration](#api-configuration)
+- [Feature Checklist](#feature-checklist)
+- [Development](#development)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
 
-### `npm start`
+## 🎯 Overview
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The Customer Consent Management UI provides a comprehensive interface for:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Managing customer consent preferences
+- Tracking consent history and changes
+- Ensuring compliance with data protection regulations
+- Providing audit trails for consent management
 
-### `npm test`
+## ⚙️ Prerequisites
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Before setting up the application, ensure you have:
 
-### `npm run build`
+- **Node.js** (version 16.x or higher)
+- **npm** (version 8.x or higher) or **yarn**
+- **Git** for version control
+- **AWS CLI** (for deployment)
+- Access to Sanlam's internal networks (if applicable)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### System Requirements
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **OS**: Windows 10/11, macOS 10.15+, or Linux Ubuntu 18.04+
+- **RAM**: Minimum 4GB (8GB recommended)
+- **Storage**: At least 500MB free space
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🚀 Setup Instructions
 
-### `npm run eject`
+### 1. Clone the Repository
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+git clone <repository-url>
+cd customer-consent-management-ui
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 2. Install Dependencies
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm install
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 3. Environment Configuration
 
-## Learn More
+Create a `.env` file in the root directory:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```env
+# API Configuration
+REACT_APP_API_BASE_URL=https://api.example.com/v1
+REACT_APP_API_KEY=your_api_key_here
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Environment
+REACT_APP_ENVIRONMENT=development
 
-### Code Splitting
+# Features Flags
+REACT_APP_ENABLE_ANALYTICS=true
+REACT_APP_ENABLE_LOGGING=true
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+# AWS Configuration (for deployment)
+REACT_APP_AWS_REGION=us-east-1
+REACT_APP_S3_BUCKET=customer-consent-ui-bucket
+```
 
-### Analyzing the Bundle Size
+### 4. Start Development Server
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm start
+```
 
-### Making a Progressive Web App
+The application will be available at [http://localhost:3000](http://localhost:3000)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 5. Build for Production
 
-### Advanced Configuration
+```bash
+npm run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## ☁️ AWS Deployment
 
-### Deployment
+### Prerequisites for AWS Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- AWS Account with appropriate permissions
+- AWS CLI configured with credentials
+- S3 bucket for hosting static files
+- CloudFront distribution (optional, for CDN)
 
-### `npm run build` fails to minify
+### Deployment Steps
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+#### Option 1: Manual S3 Deployment
+
+```bash
+# Build the application
+npm run build
+
+# Deploy to S3 bucket
+aws s3 sync build/ s3://your-bucket-name --delete
+
+# Invalidate CloudFront cache (if using CloudFront)
+aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
+```
+
+#### Option 2: Automated Deployment with AWS CLI
+
+```bash
+# Create deployment script
+npm run deploy:aws
+```
+
+### AWS Resources Required
+
+| Resource            | Purpose            | Configuration                               |
+| ------------------- | ------------------ | ------------------------------------------- |
+| **S3 Bucket**       | Static web hosting | Public read access, website hosting enabled |
+| **CloudFront**      | CDN distribution   | Origin pointing to S3 bucket                |
+| **Route 53**        | DNS management     | Domain routing to CloudFront                |
+| **ACM Certificate** | SSL/TLS            | For HTTPS support                           |
+
+### Environment-Specific Deployments
+
+#### Development
+
+```bash
+aws s3 sync build/ s3://consent-ui-dev --delete
+```
+
+#### Staging
+
+```bash
+aws s3 sync build/ s3://consent-ui-staging --delete
+```
+
+#### Production
+
+```bash
+aws s3 sync build/ s3://consent-ui-prod --delete
+```
+
+## 🔌 API Endpoint Configuration
+
+### Base Configuration
+
+The application connects to backend APIs through configurable endpoints:
+
+```javascript
+// src/config/api.js
+const API_CONFIG = {
+  baseURL: process.env.REACT_APP_API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+  },
+};
+```
+
+### Available Endpoints
+
+#### Consent Management
+
+- **GET** `/api/v1/consents` - Retrieve all consent records
+- **POST** `/api/v1/consents` - Create new consent record
+- **PUT** `/api/v1/consents/:id` - Update consent record
+- **DELETE** `/api/v1/consents/:id` - Revoke consent
+
+#### Customer Management
+
+- **GET** `/api/v1/customers` - Retrieve customer list
+- **GET** `/api/v1/customers/:id` - Get customer details
+- **GET** `/api/v1/customers/:id/consents` - Get customer consent history
+
+#### Audit & Compliance
+
+- **GET** `/api/v1/audit/logs` - Retrieve audit logs
+- **GET** `/api/v1/compliance/reports` - Generate compliance reports
+
+### API Environment Configuration
+
+#### Development
+
+```env
+REACT_APP_API_BASE_URL=https://dev-api.sanlam.co.za/consent-management/v1
+```
+
+#### Staging
+
+```env
+REACT_APP_API_BASE_URL=https://staging-api.sanlam.co.za/consent-management/v1
+```
+
+#### Production
+
+```env
+REACT_APP_API_BASE_URL=https://api.sanlam.co.za/consent-management/v1
+```
+
+## ✅ Feature Checklist
+
+### Core Features
+
+- [ ] **User Authentication**
+
+  - [ ] Login/Logout functionality
+  - [ ] Role-based access control
+  - [ ] Session management
+  - [ ] Password reset
+
+- [ ] **Consent Management**
+
+  - [ ] View consent records
+  - [ ] Create new consents
+  - [ ] Update existing consents
+  - [ ] Revoke consents
+  - [ ] Bulk consent operations
+
+- [ ] **Customer Management**
+  - [ ] Customer search and filter
+  - [ ] Customer profile view
+  - [ ] Consent history tracking
+  - [ ] Customer communication preferences
+
+### Advanced Features
+
+- [ ] **Reporting & Analytics**
+
+  - [ ] Consent analytics dashboard
+  - [ ] Compliance reporting
+  - [ ] Export functionality
+  - [ ] Real-time metrics
+
+- [ ] **Audit & Compliance**
+  - [ ] Audit trail logging
+  - [ ] GDPR compliance features
+  - [ ] Data retention policies
+  - [ ] Consent proof storage
+
+### UI/UX Features
+
+- [ ] **Interface Components**
+
+  - [ ] Responsive design
+  - [ ] Dark/Light theme toggle
+  - [ ] Accessibility compliance (WCAG 2.1)
+  - [ ] Multi-language support
+
+- [ ] **Data Management**
+  - [ ] Data export (CSV, PDF)
+  - [ ] Data import functionality
+  - [ ] Backup and restore
+  - [ ] Data validation
+
+### Security Features
+
+- [ ] **Security Implementation**
+  - [ ] API authentication
+  - [ ] Data encryption
+  - [ ] Input sanitization
+  - [ ] XSS protection
+  - [ ] CSRF protection
+
+### Performance Features
+
+- [ ] **Optimization**
+  - [ ] Code splitting
+  - [ ] Lazy loading
+  - [ ] Caching strategies
+  - [ ] Progressive Web App (PWA)
+
+## 👨‍💻 Development
+
+### Available Scripts
+
+#### Development
+
+```bash
+npm start                 # Start development server
+npm run start:https       # Start with HTTPS
+npm run start:debug       # Start with debugging enabled
+```
+
+#### Building
+
+```bash
+npm run build             # Production build
+npm run build:analyze     # Build with bundle analyzer
+npm run build:staging     # Staging build
+```
+
+#### Testing
+
+```bash
+npm test                  # Run tests in watch mode
+npm run test:coverage     # Run tests with coverage report
+npm run test:ci           # Run tests for CI/CD
+```
+
+#### Code Quality
+
+```bash
+npm run lint              # Run ESLint
+npm run lint:fix          # Fix linting issues
+npm run format            # Format code with Prettier
+```
+
+### Project Structure
+
+```
+src/
+├── components/           # Reusable UI components
+├── pages/               # Page components
+├── hooks/               # Custom React hooks
+├── services/            # API services
+├── utils/               # Utility functions
+├── config/              # Configuration files
+├── styles/              # Global styles
+└── tests/               # Test files
+```
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- --testNamePattern="ConsentForm"
+```
+
+### Test Coverage Requirements
+
+- **Unit Tests**: Minimum 80% coverage
+- **Integration Tests**: Critical user flows
+- **E2E Tests**: Core application functionality
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### Development Server Won't Start
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### Build Failures
+
+```bash
+# Check for TypeScript errors
+npm run type-check
+
+# Analyze bundle size
+npm run build:analyze
+```
+
+#### API Connection Issues
+
+1. Verify API endpoint URLs in `.env`
+2. Check network connectivity
+3. Validate API credentials
+4. Review CORS configuration
+
+### Performance Issues
+
+- Enable React DevTools Profiler
+- Check for memory leaks
+- Optimize re-renders with React.memo
+- Implement code splitting
+
+### Security Considerations
+
+- Keep dependencies updated
+- Use HTTPS in production
+- Implement proper authentication
+- Validate all user inputs
+- Follow OWASP security guidelines
+
+## 📞 Support
+
+For technical support or questions:
+
+- **Email**: dev-team@sanlam.co.za
+- **Internal Wiki**: [Link to internal documentation]
+- **Slack Channel**: #customer-consent-ui
+
+## 📝 License
+
+© 2025 Sanlam Life Insurance Limited. All rights reserved.
