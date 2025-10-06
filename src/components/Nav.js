@@ -12,7 +12,7 @@ import MenuItem from "@mui/material/MenuItem";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import { Link } from "react-router-dom";
 
-// Multi-page setup (commented out for now)
+// Multi-page setup (commented out)
 // const pages = [
 //   { label: "Home", path: "/" },
 //   { label: "Dashboard", path: "/dashboard" },
