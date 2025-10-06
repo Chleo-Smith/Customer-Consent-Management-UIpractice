@@ -18,6 +18,27 @@ export const consentData = {
         statusType: "Explicit",
         lastUpdated: "2025-09-15T10:30:00Z",
       },
+      {
+        id: 3,
+        contactMethod: "Phone",
+        status: "Declined",
+        statusType: "Explicit",
+        lastUpdated: "2025-09-15T10:30:00Z",
+      },
+      {
+        id: 4,
+        contactMethod: "Post",
+        status: "Accepted",
+        statusType: "Implicit",
+        lastUpdated: "2025-09-15T10:30:00Z",
+      },
+      {
+        id: 5,
+        contactMethod: "SMS",
+        status: "Declined",
+        statusType: "Explicit",
+        lastUpdated: "2025-09-15T10:30:00Z",
+      },
     ],
   },
 };

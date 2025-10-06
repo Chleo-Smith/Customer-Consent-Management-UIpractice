@@ -1,4 +1,13 @@
-import IconButton from "@mui/material/IconButton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate } from "react-router";
 import { consentData } from "../data/consentData";
@@ -7,33 +16,35 @@ export function Consents() {
   const navigate = useNavigate();
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Contact Method</th>
-          <th>Status</th>
-          <th>Status Type</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {consentData.data.consents.map((c) => (
-          <tr key={c.id}>
-            <td>{c.contactMethod}</td>
-            <td>{c.status}</td>
-            <td>{c.statusType}</td>
-            <td>
-              <IconButton
-                color="primary"
-                onClick={() => navigate(`/edit/${c.id}`)}
-                aria-label={`Edit ${c.contactMethod} consent`}
-              >
-                <EditIcon />
-              </IconButton>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <TableContainer component={Paper} sx={{ mt: 2 }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Contact Method</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Status Type</TableCell>
+            <TableCell>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {consentData.data.consents.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell>{c.contactMethod}</TableCell>
+              <TableCell>{c.status}</TableCell>
+              <TableCell>{c.statusType}</TableCell>
+              <TableCell>
+                <IconButton
+                  color="primary"
+                  onClick={() => navigate(`/edit/${c.id}`)}
+                  aria-label={`Edit ${c.contactMethod} consent`}
+                >
+                  <EditIcon />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
