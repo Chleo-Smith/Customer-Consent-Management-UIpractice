@@ -56,7 +56,7 @@ export function ResponsiveAppBar() {
             Sanlam Consents
           </Typography>
 
-          {/* Mobile Menu (commented out for now) */}
+          {/* Mobile Menu */}
           {/* 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
