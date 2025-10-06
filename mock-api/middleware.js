@@ -20,8 +20,8 @@ module.exports = (req, res, next) => {
   //middleware for customer validation endpoint
   if (req.path.includes("/api/customer/") && req.path.includes("/validate")) {
     // Extract customer ID from URL path
-    const pathParts = req.path.split('/');
-    const customerIndex = pathParts.indexOf('customer') + 1;
+    const pathParts = req.path.split("/");
+    const customerIndex = pathParts.indexOf("customer") + 1;
     const customerId = pathParts[customerIndex];
 
     // find customer in the database
@@ -29,7 +29,7 @@ module.exports = (req, res, next) => {
     const customer = customers.find((c) => c.customerId === customerId);
 
     if (customer) {
-      // success response
+      // //success response
       const response = {
         success: true,
         data: {
