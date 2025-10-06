@@ -36,3 +36,15 @@
     transform: rotate(360deg);
   }
 }
+
+.app-bar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.search-form-container {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem;
+  width: 30%;
+}
