@@ -19,7 +19,7 @@ module.exports = (req, res, next) => {
 
   //middleware for customer validation endpoint
   if (req.path.includes("/api/customer/") && req.path.includes("/validate")) {
-    // extract customer ID from URL path
+    // Extract customer ID from URL path
     const pathParts = req.path.split("/");
     const customerIndex = pathParts.indexOf("customer") + 1;
     const customerId = pathParts[customerIndex];
