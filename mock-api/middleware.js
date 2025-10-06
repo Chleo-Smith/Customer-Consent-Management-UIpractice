@@ -48,6 +48,17 @@ module.exports = (req, res, next) => {
       });
     }
 
+    //check if first 6 digits is valid date format
+    if (!isValidDateOfBirth(customerId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_DATE_OF_BIRTH",
+          message: "Invalid birth day entered",
+          customerId: customerId,
+        },
+      });
+    }
     try {
       // find customer in the database
       const customers = req.app.db.get("customers").value();
@@ -93,3 +104,52 @@ module.exports = (req, res, next) => {
   // continue to next middleware if no custom handling needed
   next();
 };
+
+function isValidDateOfBirth(idNumber) {
+  // extract birth date (YYMMDD)
+  const date = idNumber.substring(0, 6);
+
+  // extract year, month and day
+  const year = parseInt(date.substring(0, 2), 10);
+  const month = parseInt(date.substring(2, 4), 10);
+  const day = parseInt(date.substring(4, 6), 10);
+
+  //if not valid month value
+  if (month < 1 || month > 12) {
+    return false;
+  }
+
+  //if not valid day value
+  if (day < 1 || day > 31) {
+    return false;
+  }
+
+  //determine full year
+  const fullYear = year >= 50 ? 1900 + year : 2000 + year;
+
+  const testDate = new Date(fullYear, month - 1, day);
+
+  const isValidDate =
+    testDate.getFullYear() === fullYear &&
+    testDate.getMonth() === month - 1 &&
+    testDate.getDate() === day;
+
+  if (!isValidDate) {
+    return false;
+  }
+
+  const currentDate = new Date();
+
+  if (testDate > currentDate) {
+    return false;
+  }
+
+  const maxAge = 120;
+  const minBirthYear = currentDate.getFullYear() - maxAge;
+
+  if (fullYear < minBirthYear) {
+    return false;
+  }
+
+  return true;
+}
