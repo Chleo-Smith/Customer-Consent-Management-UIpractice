@@ -1,7 +1,7 @@
 {
   "customers": [
     {
-      "id": "1234567890123",
+      "customerId": "1234567890123",
       "isValid": true,
       "customerName": "John Smith",
       "businessUnit": "Personal Loans"
