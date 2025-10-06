@@ -1,4 +1,2 @@
 {
-  "/api/customer/:id/validate": "/customers/:id"
-
 }
