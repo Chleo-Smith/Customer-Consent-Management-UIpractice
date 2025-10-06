@@ -12,7 +12,7 @@ import MenuItem from "@mui/material/MenuItem";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import { Link } from "react-router-dom";
 
-// Multi-page setup (commented out for now)
+// Multi-page setup (commented out)
 // const pages = [
 //   { label: "Home", path: "/" },
 //   { label: "Dashboard", path: "/dashboard" },
@@ -56,7 +56,7 @@ export function ResponsiveAppBar() {
             Sanlam Consents
           </Typography>
 
-          {/* Mobile Menu (commented out for now) */}
+          {/* Mobile Menu */}
           {/* 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
