@@ -1,6 +1,6 @@
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
+import DoneIcon from "@mui/icons-material/Done";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Button,
   FormControl,
@@ -9,6 +9,7 @@ import {
   Select,
   TextField,
   Typography,
+  Stack,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -80,6 +81,43 @@ export function Dashboard() {
         </form>
       </div>
 
+      <div className="header-with-buttons">
+        <Typography variant="h2" sx={{ mt: 4 }}>
+          Marketing Consent
+        </Typography>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            type="submit"
+            sx={{
+              ml: 2,
+              height: 40,
+              textTransform: "none",
+              fontWeight: "bold",
+              px: 3,
+            }}
+            color="success"
+            startIcon={<DoneIcon />}
+          >
+            Accept All
+          </Button>
+          <Button
+            variant="contained"
+            type="submit"
+            sx={{
+              ml: 2,
+              height: 40,
+              textTransform: "none",
+              fontWeight: "bold",
+              px: 3,
+            }}
+            color="error"
+            startIcon={<CloseIcon />}
+          >
+            Decline All
+          </Button>
+        </Stack>
+      </div>
       <Consents />
     </>
   );
