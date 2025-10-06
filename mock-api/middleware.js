@@ -19,7 +19,7 @@ module.exports = (req, res, next) => {
 
   //middleware for customer validation endpoint
   if (req.path.includes("/api/customer/") && req.path.includes("/validate")) {
-    // Extract customer ID from URL path
+    // extract customer ID from URL path
     const pathParts = req.path.split("/");
     const customerIndex = pathParts.indexOf("customer") + 1;
     const customerId = pathParts[customerIndex];
@@ -31,6 +31,18 @@ module.exports = (req, res, next) => {
         error: {
           code: "INVALID_ID_LENGTH",
           message: "ID number must be exactly 13 characters",
+          customerId: customerId,
+        },
+      });
+    }
+
+    // check if all characters are numeric
+    if (!/^\d{13}$/.test(customerId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_ID_FORMAT",
+          message: "ID number must contain only numeric characters",
           customerId: customerId,
         },
       });
