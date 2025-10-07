@@ -37,6 +37,7 @@ export function Consents({
     AUTOMATED_VOICE_CALLS: "Automated voice calls",
   };
 
+  // information to display when no error or search
   const defaultContactMethods = [
     {
       id: 1,
@@ -138,8 +139,7 @@ export function Consents({
     setEditingRowId(null);
   };
 
-  //loading state
-  // Show loading/empty state
+  // loading state
   if (!customerData) {
     return (
       <TableContainer component={Paper} sx={{ mt: 2 }}>
@@ -292,17 +292,12 @@ export function Consents({
                       <MenuItem value="Declined (Explicit)">Declined</MenuItem>
                     </Select>
                   ) : (
-                    // FIXED: Remove Chip styling, just show plain text
                     c.status
                   )}
                 </TableCell>
 
-                <TableCell>
-                  {/* FIXED: Remove Chip styling, just show plain text */}
-                  {c.statusType}
-                </TableCell>
+                <TableCell>{c.statusType}</TableCell>
 
-                {/* Actions Cell */}
                 <TableCell>
                   {editingRowId === c.id ? (
                     <>
@@ -337,7 +332,6 @@ export function Consents({
         </TableBody>
       </Table>
 
-      {/* Show data source info when customer consents are loaded */}
       {customerConsents && (
         <Typography
           variant="caption"
