@@ -1,8 +1,14 @@
+const express = require("express");
+const path = require("path");
 const fetch = require("node-fetch");
 
-module.exports = async (req, res, next) => {
-  // cross origin resouce sharing
-  // allows communication between frontend and backend
+const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS middleware function
+function withCors(res) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Methods",
@@ -12,121 +18,121 @@ module.exports = async (req, res, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
+  return res;
+}
 
-  // preflight request
+// Apply CORS to all requests
+app.use((req, res, next) => {
+  withCors(res);
+
+  // Handle preflight OPTIONS requests
   if (req.method === "OPTIONS") {
-    res.sendStatus(200);
-    return;
+    return res.sendStatus(200);
   }
 
-  //middleware for customer validation endpoint
-  if (req.path.match(/^\/api\/customer\/\d{13}$/) && req.method === "GET") {
-    // extract customer ID from URL path
-    const pathParts = req.path.split("/");
-    const customerIndex = pathParts.indexOf("customer") + 1;
-    const customerId = pathParts[customerIndex];
-
-    //check if first 6 digits is valid date format
-    if (!isValidDateOfBirth(customerId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_DATE_OF_BIRTH",
-          message: "Invalid birth day entered",
-          customerId: customerId,
-        },
-      });
-    }
-
-    callCustomerIdAPI(customerId, req, res);
-    return;
-  }
-
-  // PUT update individual consent endpoint
-
-  if (
-    req.path.match(/^\/api\/consents\/\d{13}\/\d+$/) &&
-    req.method === "PUT"
-  ) {
-    const pathParts = req.path.split("/");
-    const customerId = pathParts[3];
-    const consentId = pathParts[4];
-
-    if (!isValidDateOfBirth(customerId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_DATE_OF_BIRTH",
-          message: "Invalid birth day entered",
-          customerId: customerId,
-        },
-      });
-    }
-
-    const { status, statusType } = req.body;
-
-    if (
-      !status ||
-      !statusType ||
-      (status !== "Declined" && status !== "Approved") || // update if you have other allowed statuses
-      (statusType !== "Explicit" && statusType !== "Implicit")
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_CONSENT_DATA",
-          message: "Invalid status or statusType in request body",
-        },
-      });
-    }
-
-    return await updateConsentAPI(
-      customerId,
-      consentId,
-      { status, statusType },
-      req,
-      res
-    );
-  }
-
-  /**
-   * Customer validation endpoint
-   */
-  if (req.path.match(/^\/api\/customer\/\d{13}$/) && req.method === "GET") {
-    const pathParts = req.path.split("/");
-    const customerIndex = pathParts.indexOf("customer") + 1;
-    const customerId = pathParts[customerIndex];
-
-    if (!isValidDateOfBirth(customerId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_DATE_OF_BIRTH",
-          message: "Invalid birth day entered",
-          customerId: customerId,
-        },
-      });
-    }
-
-    return await callCustomerIdAPI(customerId, req, res);
-  }
-
-  /*
-    Customer consent endpoint
-  */
-  if (
-    req.path.match(/^\/api\/consents\/[a-zA-Z0-9\-]{13,}$/) &&
-    req.method === "GET"
-  ) {
-    const pathParts = req.path.split("/");
-    const consentsIndex = pathParts.indexOf("consents") + 1;
-    const customerId = pathParts[consentsIndex];
-
-    return callCustomerConsentsAPI(customerId, req, res);
-  }
-
+  console.log(` ${req.method} ${req.originalUrl}`);
   next();
-};
+});
+
+// Customer validation endpoint
+app.get("/api/customer/:customerId", async (req, res) => {
+  const customerId = req.params.customerId;
+  console.log(`Customer lookup: ${customerId}`);
+
+  // Check if first 6 digits is valid date format
+  if (!isValidDateOfBirth(customerId)) {
+    return withCors(res)
+      .status(400)
+      .json({
+        success: false,
+        error: {
+          code: "INVALID_DATE_OF_BIRTH",
+          message: "Invalid birth day entered",
+          customerId: customerId,
+        },
+      });
+  }
+
+  return await callCustomerIdAPI(customerId, req, res);
+});
+
+// Customer consents endpoint
+app.get("/api/consents/:customerId", async (req, res) => {
+  const customerId = req.params.customerId;
+  console.log(`Consents lookup: ${customerId}`);
+
+  return await callCustomerConsentsAPI(customerId, req, res);
+});
+
+// PUT update individual consent endpoint
+// app.put("/api/consents/:customerId/:consentId", async (req, res) => {
+//   const { customerId, consentId } = req.params;
+//   console.log(`📝 Update consent: ${customerId}/${consentId}`);
+
+//   if (!isValidDateOfBirth(customerId)) {
+//     return withCors(res)
+//       .status(400)
+//       .json({
+//         success: false,
+//         error: {
+//           code: "INVALID_DATE_OF_BIRTH",
+//           message: "Invalid birth day entered",
+//           customerId: customerId,
+//         },
+//       });
+//   }
+
+//   const { status, statusType } = req.body;
+
+//   // Changed "Approved" to "Accepted" to match frontend
+//   if (
+//     !status ||
+//     !statusType ||
+//     (status !== "Declined" && status !== "Accepted") ||
+//     (statusType !== "Explicit" && statusType !== "Implicit")
+//   ) {
+//     return withCors(res)
+//       .status(400)
+//       .json({
+//         success: false,
+//         error: {
+//           code: "INVALID_CONSENT_DATA",
+//           message: "Invalid status or statusType in request body",
+//         },
+//       });
+//   }
+
+//   return await updateConsentAPI(
+//     customerId,
+//     consentId,
+//     { status, statusType },
+//     req,
+//     res
+//   );
+// });
+
+// Serve static files (React build)
+app.use(express.static(path.join(__dirname, "..", "build")));
+
+// Catch-all for React Router
+app.get("*", (req, res) => {
+  console.log(`Serving index.html for: ${req.path}`);
+  res.sendFile(path.join(__dirname, "..", "build", "index.html"));
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err);
+  withCors(res)
+    .status(500)
+    .json({
+      success: false,
+      error: {
+        code: "SERVER_ERROR",
+        message: "Internal server error",
+      },
+    });
+});
 
 async function callCustomerIdAPI(nationalId, req, res) {
   const REAL_API_CONFIG = {
@@ -150,21 +156,22 @@ async function callCustomerIdAPI(nationalId, req, res) {
     );
 
     const contentType = apiResponse.headers.get("content-type");
-
     const rawResponseText = await apiResponse.text();
 
     if (!contentType || !contentType.includes("application/json")) {
       console.error("Non-JSON response:", rawResponseText.substring(0, 500));
 
-      return res.status(502).json({
-        success: false,
-        source: "api-error",
-        error: {
-          code: "INVALID_RESPONSE_FORMAT",
-          message: "Customer service returned an invalid format",
-          customerId: nationalId,
-        },
-      });
+      return withCors(res)
+        .status(502)
+        .json({
+          success: false,
+          source: "api-error",
+          error: {
+            code: "INVALID_RESPONSE_FORMAT",
+            message: "Customer service returned an invalid format",
+            customerId: nationalId,
+          },
+        });
     }
 
     let realApiData;
@@ -174,28 +181,32 @@ async function callCustomerIdAPI(nationalId, req, res) {
     } catch (jsonError) {
       console.error("JSON parse error:", jsonError.message);
 
-      return res.status(502).json({
-        success: false,
-        source: "parse-error",
-        error: {
-          code: "INVALID_JSON_RESPONSE",
-          message: "Customer service returned malformed data",
-          customerId: nationalId,
-          details:
-            process.env.NODE_ENV === "development"
-              ? jsonError.message
-              : undefined,
-        },
-      });
+      return withCors(res)
+        .status(502)
+        .json({
+          success: false,
+          source: "parse-error",
+          error: {
+            code: "INVALID_JSON_RESPONSE",
+            message: "Customer service returned malformed data",
+            customerId: nationalId,
+            details:
+              process.env.NODE_ENV === "development"
+                ? jsonError.message
+                : undefined,
+          },
+        });
     }
+
     if (
       apiResponse.ok &&
       realApiData.success !== false &&
       realApiData.data?.customerId
     ) {
-      // if (apiResponse.ok && realApiData?.data?.customerId) {
-      return res.json({
+      console.log("Customer found successfully");
+      return withCors(res).json({
         success: true,
+        source: "sanlam-api-eb",
         data: {
           customerId: realApiData.data.customerId,
           isValid: realApiData.data.isValid,
@@ -211,29 +222,33 @@ async function callCustomerIdAPI(nationalId, req, res) {
       const errorMessage =
         realApiData.error.detail || "Customer not found in system";
 
-      return res.status(realApiData.error.status || 404).json({
-        success: false,
-        source: "real-api",
-        error: {
-          code: "CUSTOMER_NOT_FOUND",
-          message: "Customer not found",
-          customerId: nationalId,
-        },
-      });
+      return withCors(res)
+        .status(realApiData.error.status || 404)
+        .json({
+          success: false,
+          source: "real-api",
+          error: {
+            code: "CUSTOMER_NOT_FOUND",
+            message: "Customer not found",
+            customerId: nationalId,
+          },
+        });
     }
   } catch (error) {
     console.error("Network/API call failed:", error.message);
-    return res.status(503).json({
-      success: false,
-      source: "network-error",
-      error: {
-        code: "NETWORK_ERROR",
-        message: "Unable to connect to Sanlam customer service",
-        customerId: nationalId,
-        details:
-          process.env.NODE_ENV === "development" ? error.message : undefined,
-      },
-    });
+    return withCors(res)
+      .status(503)
+      .json({
+        success: false,
+        source: "network-error",
+        error: {
+          code: "NETWORK_ERROR",
+          message: "Unable to connect to Sanlam customer service",
+          customerId: nationalId,
+          details:
+            process.env.NODE_ENV === "development" ? error.message : undefined,
+        },
+      });
   }
 }
 
@@ -448,20 +463,23 @@ async function callCustomerConsentsAPI(customerId, req, res) {
       realApiData = JSON.parse(cleanedText);
     } catch (jsonError) {
       console.error("JSON Parse Error (Consents):", jsonError.message);
-      return res.status(502).json({
-        success: false,
-        source: "parse-error",
-        error: {
-          code: "INVALID_JSON_RESPONSE",
-          message: "Consents service returned malformed data",
-          customerId,
-        },
-      });
+      return withCors(res)
+        .status(502)
+        .json({
+          success: false,
+          source: "parse-error",
+          error: {
+            code: "INVALID_JSON_RESPONSE",
+            message: "Consents service returned malformed data",
+            customerId,
+          },
+        });
     }
 
     //Real API explicitly says success = true
     if (apiResponse.ok && realApiData?.success !== false) {
-      return res.json({
+      console.log("Consents fetched successfully");
+      return withCors(res).json({
         success: true,
         source: "real-api",
         data: {
@@ -474,30 +492,34 @@ async function callCustomerConsentsAPI(customerId, req, res) {
     // Real API includes an error field with 404
     if (realApiData?.error?.status === 404) {
       console.warn("Real API returned 404 Not Found:", realApiData.error);
-      return res.status(404).json({
-        success: false,
-        source: "real-api",
-        error: {
-          code: "CONSENTS_NOT_FOUND",
-          message:
-            realApiData.error.detail || "No consents found for this customer",
-          customerId,
-        },
-      });
+      return withCors(res)
+        .status(404)
+        .json({
+          success: false,
+          source: "real-api",
+          error: {
+            code: "CONSENTS_NOT_FOUND",
+            message:
+              realApiData.error.detail || "No consents found for this customer",
+            customerId,
+          },
+        });
     }
 
     // API response status is 404 but no error object
     if (apiResponse.status === 404) {
       console.warn(`API responded 404 for customer ${customerId}`);
-      return res.status(404).json({
-        success: false,
-        source: "real-api",
-        error: {
-          code: "CONSENTS_NOT_FOUND",
-          message: "No consents found for this customer",
-          customerId,
-        },
-      });
+      return withCors(res)
+        .status(404)
+        .json({
+          success: false,
+          source: "real-api",
+          error: {
+            code: "CONSENTS_NOT_FOUND",
+            message: "No consents found for this customer",
+            customerId,
+          },
+        });
     }
 
     if (!apiResponse.ok || realApiData?.success === false) {
@@ -506,39 +528,51 @@ async function callCustomerConsentsAPI(customerId, req, res) {
         realApiData?.error || apiResponse.statusText
       );
 
-      return res.status(apiResponse.status || 500).json({
-        success: false,
-        source: "real-api",
-        error: {
-          code: realApiData?.error?.status || "API_ERROR",
-          message:
-            realApiData?.error?.detail ||
-            apiResponse.statusText ||
-            "Unexpected error from Consents API",
-          customerId,
-        },
-      });
+      return withCors(res)
+        .status(apiResponse.status || 500)
+        .json({
+          success: false,
+          source: "real-api",
+          error: {
+            code: realApiData?.error?.status || "API_ERROR",
+            message:
+              realApiData?.error?.detail ||
+              apiResponse.statusText ||
+              "Unexpected error from Consents API",
+            customerId,
+          },
+        });
     }
 
-    return res.status(200).json({
-      success: true,
-      source: "real-api",
-      data: {
-        customerId,
-        businessUnits: realApiData.data?.businessUnits || [],
-      },
-    });
+    return withCors(res)
+      .status(200)
+      .json({
+        success: true,
+        source: "real-api",
+        data: {
+          customerId,
+          businessUnits: realApiData.data?.businessUnits || [],
+        },
+      });
   } catch (error) {
     console.error("Network error calling consents API:", error.message);
 
-    return res.status(500).json({
-      success: false,
-      source: "network-error",
-      error: {
-        code: "NETWORK_ERROR",
-        message: "Unable to connect to Sanlam consents service",
-        customerId,
-      },
-    });
+    return withCors(res)
+      .status(500)
+      .json({
+        success: false,
+        source: "network-error",
+        error: {
+          code: "NETWORK_ERROR",
+          message: "Unable to connect to Sanlam consents service",
+          customerId,
+        },
+      });
   }
 }
+
+// Start the server
+const port = process.env.PORT || 8080;
+app.listen(port, () => {});
+
+module.exports = app;

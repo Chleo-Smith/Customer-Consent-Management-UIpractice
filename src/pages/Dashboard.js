@@ -15,20 +15,23 @@ export function Dashboard() {
   const [searchSuccess, setSearchSuccess] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState("");
 
-  const getApiBaseUrl = () => {
-    // check if we're in development
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      return "http://localhost:3001"; // local middleware
-    } else {
-      // production
-      return "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx";
-    }
-  };
+  // const getApiBaseUrl = () => {
+  //   // check if we're in development
+  //   if (
+  //     window.location.hostname === "localhost" ||
+  //     window.location.hostname === "127.0.0.1"
+  //   ) {
+  //     return "http://localhost:3001"; // local middleware
+  //   } else {
+  //     // production
+  //     return "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx";
+  //   }
+  // };
 
-  const API_BASE_URL = getApiBaseUrl();
+  const API_BASE_URL =
+    process.env.NODE_ENV === "production"
+      ? "" // production url
+      : "http://localhost:8080"; // Use port 8080 for development
 
   // Handle ID input change
   const handleIdChange = (event) => {
