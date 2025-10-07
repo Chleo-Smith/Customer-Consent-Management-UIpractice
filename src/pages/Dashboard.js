@@ -1,6 +1,7 @@
 import SearchIcon from "@mui/icons-material/Search";
 import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
+import { CircularProgress } from "@mui/material";
 import { Button, TextField, Typography, Stack, Box } from "@mui/material";
 import { useState } from "react";
 import { Consents } from "../components/Consents";
@@ -147,6 +148,12 @@ export function Dashboard() {
           Search
         </Button>
       </form>
+
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
 
       {/* Error */}
       {error && (
