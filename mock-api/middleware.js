@@ -88,15 +88,14 @@ module.exports = async (req, res, next) => {
       res
     );
   }
-  ////
-  // GET individual consent
-  if (
-    req.path.match(/^\/api\/consents\/\d{13}\/\d+$/) &&
-    req.method === "GET"
-  ) {
+
+  /**
+   * Customer validation endpoint
+   */
+  if (req.path.match(/^\/api\/customer\/\d{13}$/) && req.method === "GET") {
     const pathParts = req.path.split("/");
-    const customerId = pathParts[3];
-    const consentId = pathParts[4];
+    const customerIndex = pathParts.indexOf("customer") + 1;
+    const customerId = pathParts[customerIndex];
 
     if (!isValidDateOfBirth(customerId)) {
       return res.status(400).json({
@@ -109,60 +108,35 @@ module.exports = async (req, res, next) => {
       });
     }
 
-    // Get the mock DB consents
-    const consents = req.app.db.get("consents").value();
-    const consent = consents.find(
-      (c) => c.customerId === customerId && c.id.toString() === consentId
-    );
-
-    if (!consent) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "CONSENT_NOT_FOUND",
-          message: "Consent not found",
-          customerId,
-          consentId,
-        },
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: consent,
-    });
+    return await callCustomerIdAPI(customerId, req, res);
   }
 
-  ////
-
-  // middleware for customer consent endpoint
+  /*
+    Customer consent endpoint
+  */
   if (
     req.path.match(/^\/api\/consents\/[a-zA-Z0-9\-]{13,}$/) &&
     req.method === "GET"
   ) {
-    //get customer ID from URL path
     const pathParts = req.path.split("/");
     const consentsIndex = pathParts.indexOf("consents") + 1;
     const customerId = pathParts[consentsIndex];
 
-    callCustomerConsentsAPI(customerId, req, res);
-
-    return;
+    return callCustomerConsentsAPI(customerId, req, res);
   }
 
   next();
 };
 
 async function callCustomerIdAPI(nationalId, req, res) {
-  // configuration for the real API
   const REAL_API_CONFIG = {
-    baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
-    timeout: 10000, // 10 seconds
-    // enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
+    baseUrl:
+      process.env.REAL_API_BASE_URL ||
+      "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
+    timeout: 10000,
   };
 
   try {
-    // call the AWS API endpoint
     const apiResponse = await fetch(
       `${REAL_API_CONFIG.baseUrl}/api/customer/${nationalId}`,
       {
@@ -172,60 +146,83 @@ async function callCustomerIdAPI(nationalId, req, res) {
           "Content-Type": "application/json",
           "User-Agent": "Sanlam-ConsentUI/1.0",
         },
-        timeout: REAL_API_CONFIG.timeout,
       }
     );
 
-    if (apiResponse.ok) {
-      const realApiData = await apiResponse.json();
+    const contentType = apiResponse.headers.get("content-type");
 
-      const transformedResponse = {
-        success: realApiData.success || true,
+    const rawResponseText = await apiResponse.text();
+
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error("Non-JSON response:", rawResponseText.substring(0, 500));
+
+      return res.status(502).json({
+        success: false,
+        source: "api-error",
+        error: {
+          code: "INVALID_RESPONSE_FORMAT",
+          message: "Customer service returned an invalid format",
+          customerId: nationalId,
+        },
+      });
+    }
+
+    let realApiData;
+
+    try {
+      realApiData = JSON.parse(rawResponseText);
+    } catch (jsonError) {
+      console.error("JSON parse error:", jsonError.message);
+
+      return res.status(502).json({
+        success: false,
+        source: "parse-error",
+        error: {
+          code: "INVALID_JSON_RESPONSE",
+          message: "Customer service returned malformed data",
+          customerId: nationalId,
+          details:
+            process.env.NODE_ENV === "development"
+              ? jsonError.message
+              : undefined,
+        },
+      });
+    }
+    if (
+      apiResponse.ok &&
+      realApiData.success !== false &&
+      realApiData.data?.customerId
+    ) {
+      // if (apiResponse.ok && realApiData?.data?.customerId) {
+      return res.json({
+        success: true,
         data: {
           customerId: realApiData.data.customerId,
           isValid: realApiData.data.isValid,
           customerName: realApiData.data.customerName,
           businessUnits: realApiData.data.businessUnits || [],
         },
-      };
-
-      return res.json(transformedResponse);
-    } else if (apiResponse.status === 404) {
-      // if customer not found in system
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "CUSTOMER_NOT_FOUND",
-          message: "Customer not found in system",
-          customerId: nationalId,
-        },
       });
-    } else {
-      // API errors
-      console.error(
-        `API error: ${apiResponse.status} ${apiResponse.statusText}`
-      );
+    }
 
-      return res.status(apiResponse.status).json({
+    // API returned success: false
+    if (realApiData.success === false && realApiData.error) {
+      console.warn("API returned error:", realApiData.error);
+      const errorMessage =
+        realApiData.error.detail || "Customer not found in system";
+
+      return res.status(realApiData.error.status || 404).json({
         success: false,
         source: "real-api",
         error: {
-          code: "API_ERROR",
-          message: `Sanlam API error: ${apiResponse.statusText}`,
+          code: "CUSTOMER_NOT_FOUND",
+          message: "Customer not found",
           customerId: nationalId,
-          statusCode: apiResponse.status,
         },
       });
     }
   } catch (error) {
-    console.error(`Network error calling API:`, error.message);
-
-    // fallback to mock data if enabled
-    // if (REAL_API_CONFIG.enableFallback) {
-    //   return callMockCustomerAPI(nationalId, req, res);
-    // }
-
-    // return error if no fallback enabled
+    console.error("Network/API call failed:", error.message);
     return res.status(503).json({
       success: false,
       source: "network-error",
@@ -234,55 +231,11 @@ async function callCustomerIdAPI(nationalId, req, res) {
         message: "Unable to connect to Sanlam customer service",
         customerId: nationalId,
         details:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Service temporarily unavailable",
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       },
     });
   }
 }
-
-//mock api call
-// function callMockCustomerAPI(nationalId, req, res) {
-//   try {
-//     // mock database logic
-//     const customers = req.app.db.get("customers").value();
-//     const customer = customers.find((c) => c.customerId === nationalId);
-
-//     if (customer) {
-//       return res.json({
-//         success: true,
-//         source: "mock-fallback",
-//         data: {
-//           customerId: customer.customerId,
-//           isValid: customer.isValid,
-//           customerName: customer.customerName,
-//           businessUnit: customer.businessUnit,
-//         },
-//       });
-//     } else {
-//       return res.status(404).json({
-//         success: false,
-//         source: "mock-fallback",
-//         error: {
-//           code: "CUSTOMER_NOT_FOUND",
-//           message: "Mock API fallback: Customer not found",
-//           customerId: nationalId,
-//         },
-//       });
-//     }
-//   } catch (error) {
-//     return res.status(500).json({
-//       success: false,
-//       source: "mock-error",
-//       error: {
-//         code: "DATABASE_ERROR",
-//         message: "Internal server error",
-//         customerId: nationalId,
-//       },
-//     });
-//   }
-// }
 
 async function updateConsentAPI(customerId, consentId, consentData, req, res) {
   const REAL_API_CONFIG = {
@@ -463,15 +416,14 @@ function isValidDateOfBirth(idNumber) {
 }
 
 async function callCustomerConsentsAPI(customerId, req, res) {
-  //API configuration
   const REAL_API_CONFIG = {
-    baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
-    timeout: 10000, // 10 seconds
-    // enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
+    baseUrl:
+      process.env.REAL_API_BASE_URL ||
+      "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
+    timeout: 10000,
   };
 
   try {
-    // call the real AWS API endpoint
     const apiResponse = await fetch(
       `${REAL_API_CONFIG.baseUrl}/api/consents/${customerId}`,
       {
@@ -481,112 +433,112 @@ async function callCustomerConsentsAPI(customerId, req, res) {
           "Content-Type": "application/json",
           "User-Agent": "Sanlam-ConsentUI/1.0",
         },
-        timeout: REAL_API_CONFIG.timeout,
       }
     );
 
-    if (apiResponse.ok) {
-      const realApiData = await apiResponse.json();
+    const rawText = await apiResponse.text();
+    const contentType = apiResponse.headers.get("content-type");
 
-      // Transform the response to match expected format
-      const transformedResponse = {
-        success: realApiData.success || true,
+    // Clean up possible invalid commas
+    const cleanedText = rawText.replace(/,\s*([}\]])/g, "$1");
+
+    let realApiData;
+
+    try {
+      realApiData = JSON.parse(cleanedText);
+    } catch (jsonError) {
+      console.error("JSON Parse Error (Consents):", jsonError.message);
+      return res.status(502).json({
+        success: false,
+        source: "parse-error",
+        error: {
+          code: "INVALID_JSON_RESPONSE",
+          message: "Consents service returned malformed data",
+          customerId,
+        },
+      });
+    }
+
+    //Real API explicitly says success = true
+    if (apiResponse.ok && realApiData?.success !== false) {
+      return res.json({
+        success: true,
         source: "real-api",
         data: {
-          customerId: customerId,
-          businessUnits: realApiData.data.businessUnits || [],
+          customerId,
+          businessUnits: realApiData.data?.businessUnits || [],
         },
-      };
+      });
+    }
 
-      return res.json(transformedResponse);
-    } else if (apiResponse.status === 404) {
-      // Customer consents not found
+    // Real API includes an error field with 404
+    if (realApiData?.error?.status === 404) {
+      console.warn("Real API returned 404 Not Found:", realApiData.error);
+      return res.status(404).json({
+        success: false,
+        source: "real-api",
+        error: {
+          code: "CONSENTS_NOT_FOUND",
+          message:
+            realApiData.error.detail || "No consents found for this customer",
+          customerId,
+        },
+      });
+    }
+
+    // API response status is 404 but no error object
+    if (apiResponse.status === 404) {
+      console.warn(`API responded 404 for customer ${customerId}`);
       return res.status(404).json({
         success: false,
         source: "real-api",
         error: {
           code: "CONSENTS_NOT_FOUND",
           message: "No consents found for this customer",
-          customerId: customerId,
-        },
-      });
-    } else {
-      // API errors
-      console.error(
-        `Consents API error: ${apiResponse.status} ${apiResponse.statusText}`
-      );
-      return res.status(apiResponse.status).json({
-        success: false,
-        source: "real-api",
-        error: {
-          code: "API_ERROR",
-          message: `Sanlam consents API error: ${apiResponse.statusText}`,
-          customerId: customerId,
-          statusCode: apiResponse.status,
+          customerId,
         },
       });
     }
+
+    if (!apiResponse.ok || realApiData?.success === false) {
+      console.error(
+        `Consents API Error ${apiResponse.status}:`,
+        realApiData?.error || apiResponse.statusText
+      );
+
+      return res.status(apiResponse.status || 500).json({
+        success: false,
+        source: "real-api",
+        error: {
+          code: realApiData?.error?.status || "API_ERROR",
+          message:
+            realApiData?.error?.detail ||
+            apiResponse.statusText ||
+            "Unexpected error from Consents API",
+          customerId,
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      source: "real-api",
+      data: {
+        customerId,
+        businessUnits: realApiData.data?.businessUnits || [],
+      },
+    });
   } catch (error) {
-    console.error(`Network error calling consents API:`, error.message);
+    console.error("Network error calling consents API:", error.message);
 
-    // fallback to mock data if enabled
-    // if (REAL_API_CONFIG.enableFallback) {
-    //   return callMockCustomerConsentsAPI(customerId, req, res);
-    // }
-
-    // return error if no fallback enabled
     return res.status(500).json({
       success: false,
       source: "network-error",
       error: {
         code: "NETWORK_ERROR",
         message: "Unable to connect to Sanlam consents service",
-        customerId: customerId,
-        details:
-          process.env.NODE_ENV === "development"
-            ? error.message
-            : "Service temporarily unavailable",
+        customerId,
       },
     });
   }
 }
-
-// function callMockCustomerConsentsAPI(customerId, req, res) {
-//   try {
-//     const consents = req.app.db.get("consents").value();
-//     const customerConsents = consents.find((c) => c.customerId === customerId);
-
-//     if (customerConsents) {
-//       return res.json({
-//         success: true,
-//         source: "mock-fallback",
-//         data: {
-//           customerId: customerId,
-//           businessUnits: customerConsents.businessUnits,
-//         },
-//       });
-//     } else {
-//       return res.status(404).json({
-//         success: false,
-//         source: "mock-fallback",
-//         error: {
-//           code: "CONSENTS_NOT_FOUND",
-//           message: "No consents found for this customer",
-//           customerId: customerId,
-//         },
-//       });
-//     }
-//   } catch (error) {
-//     console.error(`Mock consents API error:`, error);
-
-//     return res.status(500).json({
-//       success: false,
-//       source: "mock-error",
-//       error: {
-//         code: "DATABASE_ERROR",
-//         message: "Internal server error",
-//         customerId: customerId,
-//       },
-//     });
-//   }
-// }
