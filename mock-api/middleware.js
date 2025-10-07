@@ -185,6 +185,7 @@ async function callCustomerIdAPI(nationalId, req, res) {
           customerId: realApiData.data.customerId,
           isValid: realApiData.data.isValid,
           customerName: realApiData.data.customerName,
+          businessUnits: realApiData.data.businessUnits || [],
         },
       };
 
@@ -249,7 +250,7 @@ function callMockCustomerAPI(nationalId, req, res) {
           customerId: customer.customerId,
           isValid: customer.isValid,
           customerName: customer.customerName,
-          businessUnit: customer.businessUnit,
+          businessUnits: customer.businessUnits || [],
         },
       });
     } else {
