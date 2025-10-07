@@ -20,35 +20,11 @@ module.exports = (req, res, next) => {
   }
 
   //middleware for customer validation endpoint
-  if (req.path.includes("/api/customer/") && req.path.includes("/validate")) {
-    // Extract customer ID from URL path
+  if (req.path.match(/^\/api\/customer\/\d{13}$/) && req.method === "GET") {
+    // extract customer ID from URL path
     const pathParts = req.path.split("/");
     const customerIndex = pathParts.indexOf("customer") + 1;
     const customerId = pathParts[customerIndex];
-
-    //check if 13 chracters
-    if (customerId.length !== 13) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_ID_LENGTH",
-          message: "ID number must be exactly 13 characters",
-          customerId: customerId,
-        },
-      });
-    }
-
-    // check if all characters are numeric
-    if (!/^\d{13}$/.test(customerId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_ID_FORMAT",
-          message: "ID number must contain only numeric characters",
-          customerId: customerId,
-        },
-      });
-    }
 
     //check if first 6 digits is valid date format
     if (!isValidDateOfBirth(customerId)) {
@@ -69,11 +45,11 @@ module.exports = (req, res, next) => {
 };
 
 async function callCustomerIdAPI(nationalId, req, res) {
-  // Configuration for the real API
+  // configuration for the real API
   const REAL_API_CONFIG = {
     baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
     timeout: 10000, // 10 seconds
-    // enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
+    enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
   };
 
   try {
@@ -128,9 +104,9 @@ async function callCustomerIdAPI(nationalId, req, res) {
     console.error(`API call failed:`, error.message);
 
     // fallback to mock data if enabled
-    // if (REAL_API_CONFIG.enableFallback) {
-    //   return callMockCustomerAPI(nationalId, req, res);
-    // }
+    if (REAL_API_CONFIG.enableFallback) {
+      return callMockCustomerAPI(nationalId, req, res);
+    }
 
     // return error if no fallback enabled
     return res.status(500).json({
@@ -173,7 +149,7 @@ function callMockCustomerAPI(nationalId, req, res) {
         source: "mock-fallback",
         error: {
           code: "CUSTOMER_NOT_FOUND",
-          message: "Customer not found",
+          message: "Mock API fallback: Customer not found",
           customerId: nationalId,
         },
       });
