@@ -52,7 +52,7 @@ module.exports = (req, res, next) => {
     const consentsIndex = pathParts.indexOf("consents") + 1;
     const customerId = pathParts[consentsIndex];
 
-    callCustomerConsentsAPI(customerId, req, red);
+    callCustomerConsentsAPI(customerId, req, res);
 
     return;
   }
