@@ -15,6 +15,21 @@ export function Dashboard() {
   const [searchSuccess, setSearchSuccess] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState("");
 
+  const getApiBaseUrl = () => {
+    // check if we're in development
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      return "http://localhost:3001"; // local middleware
+    } else {
+      // production
+      return "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx";
+    }
+  };
+
+  const API_BASE_URL = getApiBaseUrl();
+
   // Handle ID input change
   const handleIdChange = (event) => {
     const value = event.target.value.replace(/\D/g, ""); // only digits
@@ -29,14 +44,25 @@ export function Dashboard() {
   const fetchCustomerConsents = async (customerId) => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/consents/${customerId}`,
-        { method: "GET", headers: { "Content-Type": "application/json" } }
+        `${API_BASE_URL}/api/consents/${customerId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "Sanlam-ConsentUI/1.0",
+          },
+        }
       );
+
       const data = await response.json();
-      if (response.ok) setCustomerConsents(data);
-      else setCustomerConsents(null);
+
+      if (response.ok) {
+        setCustomerConsents(data);
+      } else {
+        setCustomerConsents(null);
+      }
     } catch (err) {
-      console.error("Consents fetch error:", err);
       setCustomerConsents(null);
     }
   };
@@ -56,10 +82,15 @@ export function Dashboard() {
     setSearchSuccess(false);
 
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/customer/${idNumber}`,
-        { method: "GET", headers: { "Content-Type": "application/json" } }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/customer/${idNumber}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "User-Agent": "Sanlam-ConsentUI/1.0",
+        },
+      });
+
       const data = await response.json();
 
       if (response.ok) {
@@ -73,7 +104,9 @@ export function Dashboard() {
     } catch (err) {
       console.error("Network error:", err);
       setError(
-        "Failed to connect to server. Please check if the server is running."
+        window.location.hostname === "localhost"
+          ? "Failed to connect to server. Please check if the server is running."
+          : "Failed to connect to Sanlam API. Please try again."
       );
     } finally {
       setLoading(false);
