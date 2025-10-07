@@ -22,6 +22,7 @@ import { Consents } from "../components/Consents";
 export function Dashboard() {
   const [idNumber, setIdNumber] = useState("");
   const [customerData, setCustomerData] = useState(null);
+  const [customerConsents, setCustomerConsents] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchSuccess, setSearchSuccess] = useState(false);
@@ -32,6 +33,31 @@ export function Dashboard() {
       setIdNumber(value);
       setError(""); // clear previous errors
       setSearchSuccess(false);
+    }
+  };
+
+  // fetch customer consents
+  const fetchCustomerConsents = async (customerId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/consents/${customerId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        setCustomerConsents(data);
+      } else {
+        setCustomerConsents(null);
+      }
+    } catch (err) {
+      console.error("Consents fetch error:", err);
+      setCustomerConsents(null);
     }
   };
 
@@ -52,7 +78,9 @@ export function Dashboard() {
     setLoading(true);
     setError("");
     setCustomerData(null);
+    setCustomerConsents(null);
     setSearchSuccess(false);
+
     try {
       // call middleware API
       const response = await fetch(
@@ -71,6 +99,9 @@ export function Dashboard() {
         // customer found
         setCustomerData(data);
         setSearchSuccess(true);
+
+        //find consents for customer
+        await fetchCustomerConsents(data.data.customerId);
       } else {
         //  customer not found or validation error
         setError(data.error?.message || "Customer not found");
@@ -91,6 +122,7 @@ export function Dashboard() {
       handleSearch(event);
     }
   };
+
   //   const [customers, setCustomers] = useState([]);
   //   const [searchTerm, setSearchTerm] = useState("");
   //   const [loading, setLoading] = useState(false);
@@ -293,7 +325,13 @@ export function Dashboard() {
           </Button>
         </Stack>
       </div>
-      <Consents customerData={customerData} customerId={idNumber} />
+
+      <Consents
+        customerData={customerData}
+        customerConsents={customerConsents}
+        customerId={idNumber}
+        error={error}
+      />
     </>
   );
 }

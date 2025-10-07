@@ -41,6 +41,7 @@ module.exports = async (req, res, next) => {
     callCustomerIdAPI(customerId, req, res);
     return;
   }
+
   // PUT update individual consent endpoint
 
   if (
@@ -133,6 +134,22 @@ module.exports = async (req, res, next) => {
   }
 
   ////
+
+  // middleware for customer consent endpoint
+  if (
+    req.path.match(/^\/api\/consents\/[a-zA-Z0-9\-]{13,}$/) &&
+    req.method === "GET"
+  ) {
+    //get customer ID from URL path
+    const pathParts = req.path.split("/");
+    const consentsIndex = pathParts.indexOf("consents") + 1;
+    const customerId = pathParts[consentsIndex];
+
+    callCustomerConsentsAPI(customerId, req, res);
+
+    return;
+  }
+
   next();
 };
 
@@ -435,4 +452,126 @@ function isValidDateOfBirth(idNumber) {
   }
 
   return true;
+}
+
+async function callCustomerConsentsAPI(customerId, req, res) {
+  //API configuration
+  const REAL_API_CONFIG = {
+    baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
+    timeout: 10000, // 10 seconds
+    enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
+  };
+
+  try {
+    // call the real AWS API endpoint
+    const apiResponse = await fetch(
+      `${REAL_API_CONFIG.baseUrl}/api/consents/${customerId}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "Sanlam-ConsentUI/1.0",
+        },
+        timeout: REAL_API_CONFIG.timeout,
+      }
+    );
+
+    if (apiResponse.ok) {
+      const realApiData = await apiResponse.json();
+
+      // Transform the response to match expected format
+      const transformedResponse = {
+        success: realApiData.success || true,
+        source: "real-api",
+        data: {
+          customerId: customerId,
+          businessUnits: realApiData.data.businessUnits || [],
+        },
+      };
+
+      return res.json(transformedResponse);
+    } else if (apiResponse.status === 404) {
+      // Customer consents not found
+      return res.status(404).json({
+        success: false,
+        source: "real-api",
+        error: {
+          code: "CONSENTS_NOT_FOUND",
+          message: "No consents found for this customer",
+          customerId: customerId,
+        },
+      });
+    } else {
+      // API errors
+      console.error(
+        `Consents API error: ${apiResponse.status} ${apiResponse.statusText}`
+      );
+      throw new Error(
+        `API returned ${apiResponse.status}: ${apiResponse.statusText}`
+      );
+    }
+  } catch (error) {
+    console.error(`Consents API call failed:`, error.message);
+
+    // fallback to mock data if enabled
+    if (REAL_API_CONFIG.enableFallback) {
+      return callMockCustomerConsentsAPI(customerId, req, res);
+    }
+
+    // return error if no fallback enabled
+    return res.status(500).json({
+      success: false,
+      source: "api-error",
+      error: {
+        code: "API_CONNECTION_ERROR",
+        message: "Unable to connect to Sanlam consents service",
+        customerId: customerId,
+        details:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Service temporarily unavailable",
+      },
+    });
+  }
+}
+
+function callMockCustomerConsentsAPI(customerId, req, res) {
+  try {
+    const consents = req.app.db.get("consents").value();
+    const customerConsents = consents.find((c) => c.customerId === customerId);
+
+    if (customerConsents) {
+      return res.json({
+        success: true,
+        source: "mock-fallback",
+        data: {
+          customerId: customerId,
+          businessUnits: customerConsents.businessUnits,
+        },
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        source: "mock-fallback",
+        error: {
+          code: "CONSENTS_NOT_FOUND",
+          message: "No consents found for this customer",
+          customerId: customerId,
+        },
+      });
+    }
+  } catch (error) {
+    console.error(`Mock consents API error:`, error);
+
+    return res.status(500).json({
+      success: false,
+      source: "mock-error",
+      error: {
+        code: "DATABASE_ERROR",
+        message: "Internal server error",
+        customerId: customerId,
+      },
+    });
+  }
 }
