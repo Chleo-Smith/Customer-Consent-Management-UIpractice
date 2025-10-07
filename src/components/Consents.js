@@ -19,7 +19,12 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import { useState, useEffect } from "react";
 import { consentData } from "../data/consentData";
 
-export function Consents({ customerData, customerConsents, customerId }) {
+export function Consents({
+  customerData,
+  customerConsents,
+  customerId,
+  error,
+}) {
   const [editingRowId, setEditingRowId] = useState(null);
   const [updatedConsents, setUpdatedConsents] = useState([]);
 
@@ -31,6 +36,19 @@ export function Consents({ customerData, customerConsents, customerId }) {
     POST: "Post",
     AUTOMATED_VOICE_CALLS: "Automated voice calls",
   };
+
+  const defaultContactMethods = [
+    {
+      id: 1,
+      contactMethod: "Automated voice calls",
+      status: "---",
+      statusType: "---",
+    },
+    { id: 2, contactMethod: "Email", status: "---", statusType: "---" },
+    { id: 3, contactMethod: "Phone", status: "---", statusType: "---" },
+    { id: 4, contactMethod: "Post", status: "---", statusType: "---" },
+    { id: 5, contactMethod: "SMS", status: "---", statusType: "---" },
+  ];
 
   const transformApiConsents = (apiConsents) => {
     if (!apiConsents || !apiConsents.data || !apiConsents.data.businessUnits) {
@@ -66,14 +84,16 @@ export function Consents({ customerData, customerConsents, customerId }) {
     if (customerConsents) {
       const apiConsents = transformApiConsents(customerConsents);
       setUpdatedConsents(apiConsents);
-    } else if (!customerData) {
+    } else if (error || !customerData) {
       // If no customer data, use default consents from consentData
-      setUpdatedConsents(consentData.data.consents);
-    } else {
+      setUpdatedConsents(defaultContactMethods);
+    } else if (customerData && !customerConsents) {
       // Customer found but no consents yet (loading)
       setUpdatedConsents([]);
+    } else {
+      setUpdatedConsents(defaultContactMethods);
     }
-  }, [customerConsents, customerData]);
+  }, [customerConsents, customerData, error, customerId]);
 
   const handleEdit = (id) => {
     setEditingRowId(id);

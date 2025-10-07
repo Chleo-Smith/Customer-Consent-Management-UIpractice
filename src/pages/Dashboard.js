@@ -330,6 +330,7 @@ export function Dashboard() {
         customerData={customerData}
         customerConsents={customerConsents}
         customerId={idNumber}
+        error={error}
       />
     </>
   );
