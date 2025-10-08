@@ -565,6 +565,12 @@ async function callCustomerConsentsAPI(customerId, req, res) {
   }
 }
 
+//add catch all api routes at the end
+app.get("*", (req, res) => {
+  console.log(`Serving index.html for: ${req.path}`);
+  res.sendFile(path.join(__dirname, "..", "build", "index.html"));
+});
+
 // Start the server
 const port = process.env.PORT || 8080;
 app.listen(port, () => {});
