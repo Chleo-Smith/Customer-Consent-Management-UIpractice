@@ -127,143 +127,188 @@ export function Analytics() {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Navigation Header */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">Consent Analytics Dashboard</Typography>
-      </Box>
+      {/* Header with Summary Cards */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 4,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+          Consent Analytics Dashboard
+        </Typography>
 
-      <Grid container spacing={3}>
-        {/* Summary Cards */}
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+        {/* Summary Cards in Header */}
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Card sx={{ minWidth: 120 }}>
+            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <Typography color="textSecondary" gutterBottom variant="caption">
                 Accepted
               </Typography>
-              <Typography variant="h4" color="success.main">
+              <Typography
+                variant="h5"
+                color="success.main"
+                sx={{ fontWeight: "bold" }}
+              >
                 {totalAccepted}
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+          <Card sx={{ minWidth: 120 }}>
+            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <Typography color="textSecondary" gutterBottom variant="caption">
                 Declined
               </Typography>
-              <Typography variant="h4" color="error.main">
+              <Typography
+                variant="h5"
+                color="error.main"
+                sx={{ fontWeight: "bold" }}
+              >
                 {totalDeclined}
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
+          <Card sx={{ minWidth: 120 }}>
+            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <Typography color="textSecondary" gutterBottom variant="caption">
                 Acceptance Rate
               </Typography>
-              <Typography variant="h4" color="primary.main">
+              <Typography
+                variant="h5"
+                color="primary.main"
+                sx={{ fontWeight: "bold" }}
+              >
                 {acceptanceRate}%
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
+      </Box>
 
-        {/* Bar Chart */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 3 }}>
-              Consent Status by Business Unit
-            </Typography>
-            {businessUnitData.length > 0 ? (
-              <BarChart
-                dataset={businessUnitData}
-                xAxis={[
-                  {
-                    scaleType: "band",
-                    dataKey: "businessUnit",
-                    label: "Business Unit Types",
-                    tickPlacement: "middle",
-                    tickLabelStyle: {
-                      angle: -45,
-                      textAnchor: "end",
-                      fontSize: 12,
-                      fontWeight: "bold",
-                    },
-                  },
-                ]}
-                yAxis={[
-                  {
-                    label: "Number of Consents",
-                  },
-                ]}
-                series={[
-                  {
-                    dataKey: "accepted",
-                    label: "Accepted",
-                    color: "#22a7eeff",
-                  },
-                  {
-                    dataKey: "declined",
-                    label: "Declined",
-                    color: "#e700004f",
-                  },
-                ]}
-                width={800}
-                height={400}
-                margin={{ left: 80, right: 50, top: 50, bottom: 120 }}
-              />
-            ) : (
-              <Typography color="textSecondary" align="center">
-                No consent data available
-              </Typography>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Pie Chart for Implicit vs Explicit Approvals */}
+      <Grid container spacing={3}>
+        {/* Pie Chart - Left Side */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 3 }}>
+          <Paper
+            sx={{
+              p: 3,
+              height: "500px",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ mb: 3, textAlign: "center", fontWeight: "bold" }}
+            >
               Consent Type Distribution
             </Typography>
-            {implicitCount > 0 || explicitCount > 0 ? (
-              <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Box
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {implicitCount > 0 || explicitCount > 0 ? (
                 <PieChart
                   series={[
                     {
-                      innerRadius: 50,
-                      outerRadius: 100,
+                      innerRadius: 60,
+                      outerRadius: 120,
                       data: [
                         {
                           id: 0,
                           value: implicitCount,
                           label: "Implicit",
-                          color: "#2196f3",
+                          color: "#9c27b0",
                         },
                         {
                           id: 1,
                           value: explicitCount,
                           label: "Explicit",
-                          color: "#e700004f",
+                          color: "#ff9800",
                         },
                       ],
                     },
                   ]}
                   width={400}
-                  height={300}
+                  height={350}
                 />
-              </Box>
-            ) : (
-              <Typography color="textSecondary" align="center">
-                No consent type data available
-              </Typography>
-            )}
+              ) : (
+                <Typography color="textSecondary" align="center">
+                  No consent type data available
+                </Typography>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Bar Chart - Right Side */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, height: "500px" }}>
+            <Typography
+              variant="h6"
+              sx={{ mb: 3, textAlign: "center", fontWeight: "bold" }}
+            >
+              Consent Status by Business Unit
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "400px",
+              }}
+            >
+              {businessUnitData.length > 0 ? (
+                <BarChart
+                  dataset={businessUnitData}
+                  xAxis={[
+                    {
+                      scaleType: "band",
+                      dataKey: "businessUnit",
+                      label: "Business Unit Types",
+                      tickPlacement: "middle",
+                      tickLabelStyle: {
+                        angle: -45,
+                        textAnchor: "end",
+                        fontSize: 11,
+                        fontWeight: "bold",
+                      },
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: "Number of Consents",
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "accepted",
+                      label: "Accepted",
+                      color: "#4caf50",
+                    },
+                    {
+                      dataKey: "declined",
+                      label: "Declined",
+                      color: "#f44336",
+                    },
+                  ]}
+                  width={550}
+                  height={380}
+                  margin={{ left: 80, right: 50, top: 30, bottom: 120 }}
+                />
+              ) : (
+                <Typography color="textSecondary" align="center">
+                  No consent data available
+                </Typography>
+              )}
+            </Box>
           </Paper>
         </Grid>
       </Grid>
