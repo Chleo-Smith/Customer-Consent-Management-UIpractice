@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { BarChart } from "@mui/x-charts/BarChart";
+import { PieChart } from "@mui/x-charts/PieChart";
 
 export function Analytics() {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ export function Analytics() {
     totalAccepted: 0,
     totalDeclined: 0,
     totalConsents: 0,
+    implicitCount: 0,
+    explicitCount: 0,
   });
 
   useEffect(() => {
@@ -39,6 +42,8 @@ export function Analytics() {
         let totalAccepted = 0;
         let totalDeclined = 0;
         let totalConsents = 0;
+        let implicitCount = 0;
+        let explicitCount = 0;
 
         consents.forEach((consent) => {
           consent.businessUnits.forEach((bu) => {
@@ -54,6 +59,15 @@ export function Analytics() {
 
             bu.consents.forEach((c) => {
               totalConsents++;
+
+              // Count status types
+              if (c.statusType === "IMPLICIT") {
+                implicitCount++;
+              } else if (c.statusType === "EXPLICIT") {
+                explicitCount++;
+              }
+
+              // Count accepted/declined
               if (c.status === "ACCEPTED") {
                 businessUnitStats[businessUnit].accepted++;
                 totalAccepted++;
@@ -72,6 +86,8 @@ export function Analytics() {
           totalAccepted,
           totalDeclined,
           totalConsents,
+          implicitCount,
+          explicitCount,
         });
       } catch (error) {
         console.error("Error fetching consent data:", error);
@@ -98,8 +114,14 @@ export function Analytics() {
     );
   }
 
-  const { businessUnitData, totalAccepted, totalDeclined, totalConsents } =
-    analyticsData;
+  const {
+    businessUnitData,
+    totalAccepted,
+    totalDeclined,
+    totalConsents,
+    implicitCount,
+    explicitCount,
+  } = analyticsData;
   const acceptanceRate =
     totalConsents > 0 ? Math.round((totalAccepted / totalConsents) * 100) : 0;
 
@@ -199,6 +221,47 @@ export function Analytics() {
             ) : (
               <Typography color="textSecondary" align="center">
                 No consent data available
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Pie Chart for Implicit vs Explicit Approvals */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Consent Type Distribution
+            </Typography>
+            {implicitCount > 0 || explicitCount > 0 ? (
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <PieChart
+                  series={[
+                    {
+                      innerRadius: 50,
+                      outerRadius: 100,
+                      data: [
+                        {
+                          id: 0,
+                          value: implicitCount,
+                          label: "Implicit",
+                          color: "#2196f3",
+                        },
+                        {
+                          id: 1,
+                          value: explicitCount,
+                          label: "Explicit",
+                          color: "#e700004f",
+                        },
+                      ],
+                    },
+                  ]}
+                  width={400}
+                  height={300}
+                />
+              </Box>
+            ) : (
+              <Typography color="textSecondary" align="center">
+                No consent type data available
               </Typography>
             )}
           </Paper>
