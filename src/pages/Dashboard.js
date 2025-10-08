@@ -3,11 +3,18 @@ import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
-import { CircularProgress } from "@mui/material";
-
-import { Button, TextField, Typography, Stack, Box, Fab } from "@mui/material";
+import {
+  CircularProgress,
+  Button,
+  TextField,
+  Typography,
+  Stack,
+  Box,
+  Fab,
+} from "@mui/material";
 import { useState } from "react";
 import { Consents } from "../components/Consents";
+import BusinessUnit from "../components/BusinessUnit";
 
 export function Dashboard({ mode, toggleTheme }) {
   const [idNumber, setIdNumber] = useState("");
@@ -16,9 +23,10 @@ export function Dashboard({ mode, toggleTheme }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchSuccess, setSearchSuccess] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState("");
 
   const handleIdChange = (event) => {
-    const value = event.target.value.replace(/\D/g, ""); // only allow digits
+    const value = event.target.value.replace(/\D/g, ""); // only digits
     if (value.length <= 13) {
       setIdNumber(value);
       setError("");
@@ -30,20 +38,11 @@ export function Dashboard({ mode, toggleTheme }) {
     try {
       const response = await fetch(
         `http://localhost:3001/api/consents/${customerId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { method: "GET", headers: { "Content-Type": "application/json" } }
       );
-
       const data = await response.json();
-      if (response.ok) {
-        setCustomerConsents(data);
-      } else {
-        setCustomerConsents(null);
-      }
+      if (response.ok) setCustomerConsents(data);
+      else setCustomerConsents(null);
     } catch (err) {
       console.error("Consents fetch error:", err);
       setCustomerConsents(null);
@@ -57,7 +56,6 @@ export function Dashboard({ mode, toggleTheme }) {
       setError("Please enter an ID number");
       return;
     }
-
     if (idNumber.length !== 13) {
       setError("ID number must be exactly 13 digits");
       return;
@@ -68,18 +66,13 @@ export function Dashboard({ mode, toggleTheme }) {
     setCustomerData(null);
     setCustomerConsents(null);
     setSearchSuccess(false);
+    setSelectedUnit("");
 
     try {
       const response = await fetch(
         `http://localhost:3001/api/customer/${idNumber}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { method: "GET", headers: { "Content-Type": "application/json" } }
       );
-
       const data = await response.json();
 
       if (response.ok) {
@@ -100,17 +93,18 @@ export function Dashboard({ mode, toggleTheme }) {
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === "Enter") {
-      handleSearch(event);
-    }
+    if (event.key === "Enter") handleSearch(event);
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Search and Filter Form */}
-      <form onSubmit={handleSearch} className="search-form-container">
+      {/* Search Form */}
+      <form
+        onSubmit={handleSearch}
+        className="search-form-container"
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
         <TextField
-          className="search-bar"
           size="small"
           onChange={handleIdChange}
           onKeyPress={handleKeyPress}
@@ -118,21 +112,19 @@ export function Dashboard({ mode, toggleTheme }) {
           variant="outlined"
           fullWidth
           value={idNumber}
+          disabled={loading}
         />
         <Button
           variant="contained"
           type="submit"
-          disabled={loading} // don't click when loading
+          disabled={loading} // disable during loading
           sx={{
-            ml: 2,
             height: 40,
             backgroundColor: "#1976d2",
             textTransform: "none",
             fontWeight: "bold",
             px: 3,
-            "&:hover": {
-              backgroundColor: "#115293",
-            },
+            "&:hover": { backgroundColor: "#115293" },
           }}
           startIcon={<SearchIcon />}
         >
@@ -218,7 +210,7 @@ export function Dashboard({ mode, toggleTheme }) {
               mt: 0.5,
             }}
           >
-            <CloseIcon sx={{ fontSize: 16, color: "white" }} />
+            <DoneIcon sx={{ fontSize: 16, color: "white" }} />
           </Box>
 
           <Box sx={{ flex: 1 }}>
@@ -243,67 +235,69 @@ export function Dashboard({ mode, toggleTheme }) {
         </Box>
       )}
 
-      {/* Header and Buttons */}
-      <div className="header-with-buttons">
-        <Typography variant="h2" sx={{ mt: 4 }}>
-          Marketing Consent
-        </Typography>
-
-        {customerData && (
+      {/* Marketing Consent Header & Actions */}
+      {customerData && (
+        <Box className="header-with-buttons" sx={{ mt: 4 }}>
+          <Typography variant="h2">Marketing Consent</Typography>
           <Typography variant="h6" sx={{ mt: 1, color: "text.secondary" }}>
             Managing consents for:{" "}
             <strong>{customerData.data.customerName}</strong>
           </Typography>
-        )}
 
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant="contained"
-            sx={{
-              ml: 2,
-              height: 40,
-              textTransform: "none",
-              fontWeight: "bold",
-              px: 3,
-            }}
-            color="success"
-            startIcon={<DoneIcon />}
-          >
-            Accept All
-          </Button>
-          <Button
-            variant="contained"
-            sx={{
-              ml: 2,
-              height: 40,
-              textTransform: "none",
-              fontWeight: "bold",
-              px: 3,
-            }}
-            color="error"
-            startIcon={<CloseIcon />}
-          >
-            Decline All
-          </Button>
-        </Stack>
-      </div>
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<DoneIcon />}
+              sx={{
+                textTransform: "none",
+                fontWeight: "bold",
+                px: 3,
+                height: 40,
+              }}
+            >
+              Accept All
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<CloseIcon />}
+              sx={{
+                textTransform: "none",
+                fontWeight: "bold",
+                px: 3,
+                height: 40,
+              }}
+            >
+              Decline All
+            </Button>
+          </Stack>
+        </Box>
+      )}
 
-      {/* Consents */}
-      <Consents
-        customerData={customerData}
-        customerConsents={customerConsents}
-        customerId={idNumber}
-        error={error}
-      />
+      {/* Business Unit Filter */}
+      {customerData?.data.businessUnits?.length > 0 && (
+        <BusinessUnit
+          businessUnits={customerData.data.businessUnits}
+          value={selectedUnit}
+          onChange={setSelectedUnit}
+        />
+      )}
+
+      {/* Consents Table */}
+      {customerData && (
+        <Consents
+          customerData={customerData}
+          customerConsents={customerConsents}
+          customerId={idNumber}
+          error={error}
+          selectedUnit={selectedUnit || null}
+        />
+      )}
 
       {/* Floating Theme Toggle FAB */}
       <Fab
-        sx={{
-          position: "fixed",
-          bottom: 16,
-          right: 16,
-          zIndex: 9999,
-        }}
+        sx={{ position: "fixed", bottom: 16, right: 16, zIndex: 9999 }}
         color="primary"
         aria-label="toggle theme"
         onClick={toggleTheme}
