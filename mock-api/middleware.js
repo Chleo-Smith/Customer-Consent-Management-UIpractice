@@ -114,12 +114,6 @@ app.get("/api/consents/:customerId", async (req, res) => {
 // Serve static files (React build)
 app.use(express.static(path.join(__dirname, "..", "build")));
 
-// Catch-all for React Router
-app.get("*", (req, res) => {
-  console.log(`Serving index.html for: ${req.path}`);
-  res.sendFile(path.join(__dirname, "..", "build", "index.html"));
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
