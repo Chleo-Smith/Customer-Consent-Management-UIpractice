@@ -30,6 +30,19 @@ const GLOBAL_BUSINESS_UNITS = [
   { label: "Financial Planning", value: "FINANCIAL_PLANNING" },
 ];
 
+const defaultContactMethods = [
+  {
+    id: 1,
+    contactMethod: "Automated voice calls",
+    status: "---",
+    statusType: "---",
+  },
+  { id: 2, contactMethod: "Email", status: "---", statusType: "---" },
+  { id: 3, contactMethod: "Phone", status: "---", statusType: "---" },
+  { id: 4, contactMethod: "Post", status: "---", statusType: "---" },
+  { id: 5, contactMethod: "SMS", status: "---", statusType: "---" },
+];
+
 export function Consents({
   customerData,
   customerConsents,
@@ -54,19 +67,6 @@ export function Consents({
     POST: "Post",
     AUTOMATED_VOICE_CALLS: "Automated voice calls",
   };
-
-  const defaultContactMethods = [
-    {
-      id: 1,
-      contactMethod: "Automated voice calls",
-      status: "---",
-      statusType: "---",
-    },
-    { id: 2, contactMethod: "Email", status: "---", statusType: "---" },
-    { id: 3, contactMethod: "Phone", status: "---", statusType: "---" },
-    { id: 4, contactMethod: "Post", status: "---", statusType: "---" },
-    { id: 5, contactMethod: "SMS", status: "---", statusType: "---" },
-  ];
 
   const transformApiConsents = (apiConsents) => {
     if (!apiConsents?.data?.businessUnits) return [];

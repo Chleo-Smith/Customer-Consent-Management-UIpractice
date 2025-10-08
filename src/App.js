@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { ResponsiveAppBar } from "./components/Nav";
 import "./styles.css";
 import { Dashboard } from "./pages/Dashboard";
+import { Analytics } from "./pages/Analytics";
 import { darkTheme, lightTheme } from "./components/theme";
 
 export default function App() {
@@ -30,6 +31,10 @@ export default function App() {
           <Route
             path="/"
             element={<Dashboard mode={mode} toggleTheme={toggleTheme} />}
+          />
+          <Route
+            path="/analytics"
+            element={<Analytics />}
           />
         </Routes>
       </div>

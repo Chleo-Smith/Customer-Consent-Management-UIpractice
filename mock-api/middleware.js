@@ -126,10 +126,7 @@ async function callCustomerIdAPI(nationalId, req, res) {
   );
 
   try {
-    console.log(
-      "📡 Calling real API:",
-      `${REAL_API_CONFIG.baseUrl}/api/customer/${nationalId}`
-    );
+    console.log(`${REAL_API_CONFIG.baseUrl}/api/customer/${nationalId}`);
 
     // call the real AWS API endpoint
     const apiResponse = await fetch(
@@ -145,37 +142,25 @@ async function callCustomerIdAPI(nationalId, req, res) {
       }
     );
 
-    console.log(
-      "📡 API Response status:",
-      apiResponse.status,
-      apiResponse.statusText
-    );
+    console.log(apiResponse.status, apiResponse.statusText);
     clearTimeout(timeoutId);
 
     if (apiResponse.ok) {
-      console.log("✅ API returned OK status, parsing response...");
       let realApiData;
       try {
         const responseText = await apiResponse.text();
-        console.log("📄 Raw API response:", responseText.substring(0, 500));
         realApiData = JSON.parse(responseText);
-        console.log("✅ JSON parsed successfully");
       } catch (jsonError) {
         console.error(
-          "❌ Failed to parse API response as JSON:",
+          "Failed to parse API response as JSON:",
           jsonError.message
         );
         throw new Error("Invalid JSON response from API");
       }
 
-      console.log(
-        "📊 Parsed API data structure:",
-        JSON.stringify(realApiData, null, 2)
-      );
-
       // Validate the response structure
       if (!realApiData?.data?.customerId) {
-        console.error("❌ API response missing required data. Structure:", {
+        console.error("API response missing required data. Structure:", {
           hasData: !!realApiData?.data,
           hasCustomerId: !!realApiData?.data?.customerId,
           dataKeys: realApiData?.data ? Object.keys(realApiData.data) : [],
@@ -184,7 +169,6 @@ async function callCustomerIdAPI(nationalId, req, res) {
         throw new Error("Invalid API response structure");
       }
 
-      console.log("✅ Response validation passed, sending to client");
       const transformedResponse = {
         success: realApiData.success || true,
         source: "real-api",
@@ -197,7 +181,6 @@ async function callCustomerIdAPI(nationalId, req, res) {
 
       return res.json(transformedResponse);
     } else if (apiResponse.status === 404) {
-      console.log("❌ API returned 404 - customer not found");
       // if customer not found in system
       return res.status(404).json({
         success: false,
@@ -211,7 +194,7 @@ async function callCustomerIdAPI(nationalId, req, res) {
     } else {
       // API errors
       console.error(
-        `❌ API error: ${apiResponse.status} ${apiResponse.statusText}`
+        `API error: ${apiResponse.status} ${apiResponse.statusText}`
       );
       throw new Error(
         `API returned ${apiResponse.status}: ${apiResponse.statusText}`
@@ -219,12 +202,11 @@ async function callCustomerIdAPI(nationalId, req, res) {
     }
   } catch (error) {
     clearTimeout(timeoutId);
-    console.error(`❌ API call failed:`, error.message);
-    console.error(`❌ Error stack:`, error.stack);
+    console.error(`API call failed:`, error.message);
+    console.error(`Error stack:`, error.stack);
 
     // fallback to mock data if enabled
     if (REAL_API_CONFIG.enableFallback) {
-      console.log("🔄 Falling back to mock API...");
       return callMockCustomerAPI(nationalId, req, res);
     }
 
