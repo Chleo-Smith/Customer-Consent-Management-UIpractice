@@ -3,20 +3,17 @@
     {
       "customerId": "1234567890123",
       "isValid": true,
-      "customerName": "John Smith",
-      "businessUnit": "Personal Loans"
+      "customerName": "John Smith"
     },
     {
       "customerId": "9904157890123",
       "isValid": true,
-      "customerName": "Jane Doe",
-      "businessUnit": "Personal Loans"
+      "customerName": "Jane Doe"
     },
     {
       "customerId": "0002027890123",
       "isValid": true,
-      "customerName": "Ben Smith",
-      "businessUnit": "Personal Loans"
+      "customerName": "Ben Smith"
     }
   ],
 

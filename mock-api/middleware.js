@@ -197,7 +197,7 @@ function callMockCustomerAPI(nationalId, req, res) {
           customerId: customer.customerId,
           isValid: customer.isValid,
           customerName: customer.customerName,
-          businessUnit: customer.businessUnit,
+          businessUnits: [{ businessUnit: customer.businessUnit }],
         },
       });
     } else {
