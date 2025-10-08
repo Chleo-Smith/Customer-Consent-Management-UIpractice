@@ -22,6 +22,7 @@ export function Analytics() {
   const [analyticsData, setAnalyticsData] = useState({
     businessUnitData: [],
     contactMethodData: [],
+    contactMethodFrequencyData: [],
     totalAccepted: 0,
     totalDeclined: 0,
     totalConsents: 0,
@@ -42,6 +43,7 @@ export function Analytics() {
         // Process the data to create analytics
         const businessUnitStats = {};
         const contactMethodStats = {};
+        const contactMethodFrequencyStats = {};
         let totalAccepted = 0;
         let totalDeclined = 0;
         let totalConsents = 0;
@@ -66,7 +68,10 @@ export function Analytics() {
               // Track contact method statistics
               if (!contactMethodStats[c.contactMethod]) {
                 contactMethodStats[c.contactMethod] = {
-                  contactMethod: c.contactMethod.replace("_", " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+                  contactMethod: c.contactMethod
+                    .replace("_", " ")
+                    .toLowerCase()
+                    .replace(/\b\w/g, (l) => l.toUpperCase()),
                   accepted: 0,
                   declined: 0,
                   total: 0,
@@ -74,6 +79,19 @@ export function Analytics() {
               }
 
               contactMethodStats[c.contactMethod].total++;
+
+              // Track contact method frequency (how often each method is selected)
+              if (!contactMethodFrequencyStats[c.contactMethod]) {
+                contactMethodFrequencyStats[c.contactMethod] = {
+                  contactMethod: c.contactMethod
+                    .replace("_", " ")
+                    .toLowerCase()
+                    .replace(/\b\w/g, (l) => l.toUpperCase()),
+                  frequency: 0,
+                };
+              }
+
+              contactMethodFrequencyStats[c.contactMethod].frequency++;
 
               // Count status types
               if (c.statusType === "IMPLICIT") {
@@ -98,6 +116,9 @@ export function Analytics() {
 
         const businessUnitData = Object.values(businessUnitStats);
         const contactMethodData = Object.values(contactMethodStats);
+        const contactMethodFrequencyData = Object.values(
+          contactMethodFrequencyStats
+        );
 
         // Find most preferred contact method (highest acceptance rate)
         let mostPreferredMethod = "";
@@ -115,11 +136,14 @@ export function Analytics() {
 
         setAnalyticsData({
           businessUnitData,
+          contactMethodData,
+          contactMethodFrequencyData,
           totalAccepted,
           totalDeclined,
           totalConsents,
           implicitCount,
           explicitCount,
+          mostPreferredMethod,
         });
       } catch (error) {
         console.error("Error fetching consent data:", error);
@@ -148,11 +172,14 @@ export function Analytics() {
 
   const {
     businessUnitData,
+    contactMethodData,
+    contactMethodFrequencyData,
     totalAccepted,
     totalDeclined,
     totalConsents,
     implicitCount,
     explicitCount,
+    mostPreferredMethod,
   } = analyticsData;
   const acceptanceRate =
     totalConsents > 0 ? Math.round((totalAccepted / totalConsents) * 100) : 0;
@@ -224,6 +251,23 @@ export function Analytics() {
                 sx={{ fontWeight: "bold" }}
               >
                 {acceptanceRate}%
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ minWidth: 140 }}>
+            <CardContent
+              sx={{ p: 2, "&:last-child": { pb: 2 }, textAlign: "center" }}
+            >
+              <Typography color="textSecondary" gutterBottom variant="caption">
+                Preferred Method
+              </Typography>
+              <Typography
+                variant="body1"
+                color="info.main"
+                sx={{ fontWeight: "bold", fontSize: "0.9rem" }}
+              >
+                {mostPreferredMethod || "N/A"}
               </Typography>
             </CardContent>
           </Card>
@@ -316,10 +360,9 @@ export function Analytics() {
                       label: "Business Unit Types",
                       tickPlacement: "middle",
                       tickLabelStyle: {
-                        angle: -45,
-                        textAnchor: "end",
+                        angle: 0,
+                        textAnchor: "middle",
                         fontSize: 11,
-                        fontWeight: "bold",
                       },
                     },
                   ]}
@@ -347,6 +390,69 @@ export function Analytics() {
               ) : (
                 <Typography color="textSecondary" align="center">
                   No consent data available
+                </Typography>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Contact Method Effectiveness Chart - Full Width */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, height: "400px", width: "100%" }}>
+            <Typography
+              variant="h6"
+              sx={{ mb: 3, textAlign: "center", fontWeight: "bold" }}
+            >
+              Contact Method Effectiveness
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "300px",
+                width: "100%",
+              }}
+            >
+              {contactMethodData && contactMethodData.length > 0 ? (
+                <BarChart
+                  dataset={contactMethodData}
+                  xAxis={[
+                    {
+                      scaleType: "band",
+                      dataKey: "contactMethod",
+                      label: "Contact Methods",
+                      tickPlacement: "middle",
+                      tickLabelStyle: {
+                        angle: 0,
+                        fontSize: 11,
+                      },
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: "Number of Consents",
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "accepted",
+                      label: "Accepted",
+                      color: "#2196f3",
+                    },
+                    {
+                      dataKey: "declined",
+                      label: "Declined",
+                      color: "#ff5722",
+                    },
+                  ]}
+                  width={900}
+                  height={280}
+                  margin={{ left: 80, right: 50, top: 30, bottom: 80 }}
+                />
+              ) : (
+                <Typography color="textSecondary" align="center">
+                  No contact method data available
                 </Typography>
               )}
             </Box>
