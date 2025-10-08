@@ -15,14 +15,13 @@
       "isValid": true,
       "customerName": "Ben Smith"
     },
-        {
+    {
       "customerId": "8502134567890",
       "isValid": true,
       "customerName": "Jill Peters"
     }
   ],
-
- "consents": [
+  "consents": [
     {
       "id": 1,
       "customerId": "c11f8e25-5615-d367-a107-41f92f507180",
@@ -40,7 +39,7 @@
               "status": "DECLINED",
               "statusType": "EXPLICIT"
             },
-           {
+            {
               "contactMethod": "EMAIL",
               "status": "ACCEPTED",
               "statusType": "EXPLICIT"
@@ -57,7 +56,7 @@
             }
           ]
         },
-       {
+        {
           "businessUnit": "Sanlam Life Insurance",
           "consents": [
             {
@@ -83,31 +82,36 @@
           "consents": [
             {
               "contactMethod": "EMAIL",
-              "status": "ACCEPTED",
-              "statusType": "EXPLICIT"
+              "status": "DECLINED",
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:24:17.778Z"
             },
             {
               "contactMethod": "SMS",
-              "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "status": "ACCEPTED",
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:24:17.787Z"
             },
             {
               "contactMethod": "PHONE",
               "status": "ACCEPTED",
-              "statusType": "IMPLICIT"
+              "statusType": "IMPLICIT",
+              "lastUpdated": "2025-10-08T18:24:17.795Z"
             },
             {
               "contactMethod": "POST",
               "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:24:17.807Z"
             },
-           {
+            {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "ACCEPTED",
-              "statusType": "IMPLICIT"
+              "statusType": "IMPLICIT",
+              "lastUpdated": "2025-10-08T18:24:17.816Z"
             }
           ]
-        }, 
+        },
         {
           "businessUnit": "Sanlam Life Insurance",
           "consents": [
@@ -131,14 +135,17 @@
               "status": "DECLINED",
               "statusType": "EXPLICIT"
             },
-           {
+            {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "ACCEPTED",
               "statusType": "IMPLICIT"
             }
           ]
         }
-      ]
+      ],
+      "status": "Declined",
+      "statusType": "Explicit",
+      "lastUpdated": "2025-10-08T16:56:00.261Z"
     },
     {
       "id": 3,
@@ -179,7 +186,7 @@
             }
           ]
         }
-     ]
+      ]
     },
     {
       "id": 4,
@@ -203,7 +210,7 @@
               "status": "ACCEPTED",
               "statusType": "EXPLICIT"
             },
-           {
+            {
               "contactMethod": "POST",
               "status": "ACCEPTED",
               "statusType": "IMPLICIT"
@@ -218,5 +225,4 @@
       ]
     }
   ]
-
 }
