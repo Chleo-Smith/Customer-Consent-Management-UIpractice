@@ -12,23 +12,30 @@ import {
   Typography,
   Button,
   Stack,
+  CircularProgress,
+  Box,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckIcon from "@mui/icons-material/Check";
 import { useState, useEffect } from "react";
-import { consentData } from "../data/consentData";
+import BusinessUnit from "./BusinessUnit";
 
 export function Consents({
   customerData,
   customerConsents,
   customerId,
   error,
+  selectedUnit,
 }) {
   const [editingRowId, setEditingRowId] = useState(null);
   const [updatedConsents, setUpdatedConsents] = useState([]);
   const [confirmedConsents, setConfirmedConsents] = useState([]);
+  const [selectedBusinessUnit, setSelectedBusinessUnit] = useState(
+    selectedUnit || ""
+  );
+  const [loading, setLoading] = useState(true);
 
   const contactMethodMap = {
     SMS: "SMS",
@@ -52,32 +59,51 @@ export function Consents({
   ];
 
   const transformApiConsents = (apiConsents) => {
-    if (!apiConsents?.data?.businessUnits) return [];
+    if (!apiConsents || !apiConsents.data || !apiConsents.data.businessUnits)
+      return [];
+
+    const transformed = [];
     let idCounter = 1;
-    return apiConsents.data.businessUnits.flatMap((bu) =>
-      bu.consents.map((consent) => ({
-        id: idCounter++,
-        contactMethod:
-          contactMethodMap[consent.contactMethod] || consent.contactMethod,
-        originalContactMethod: consent.contactMethod,
-        status:
-          consent.status.charAt(0) + consent.status.slice(1).toLowerCase(),
-        statusType:
-          consent.statusType.charAt(0) +
-          consent.statusType.slice(1).toLowerCase(),
-        businessUnit: bu.businessUnit,
-        rawStatus: consent.status,
-        rawStatusType: consent.statusType,
-      }))
-    );
+
+    apiConsents.data.businessUnits.forEach((bu) => {
+      bu.consents.forEach((consent) => {
+        transformed.push({
+          id: idCounter++,
+          contactMethod:
+            contactMethodMap[consent.contactMethod] || consent.contactMethod,
+          originalContactMethod: consent.contactMethod,
+          status:
+            consent.status.charAt(0) + consent.status.slice(1).toLowerCase(),
+          statusType:
+            consent.statusType.charAt(0) +
+            consent.statusType.slice(1).toLowerCase(),
+          businessUnit: bu.businessUnit,
+          rawStatus: consent.status,
+          rawStatusType: consent.statusType,
+        });
+      });
+    });
+
+    return transformed;
   };
 
   // Load consents from API or default
   useEffect(() => {
+    setLoading(true);
     if (customerConsents) {
       const apiConsents = transformApiConsents(customerConsents);
-      setUpdatedConsents(apiConsents);
-      setConfirmedConsents(apiConsents);
+
+      let filteredConsents = apiConsents;
+      if (selectedBusinessUnit) {
+        filteredConsents = apiConsents.filter(
+          (c) =>
+            c.businessUnit.toUpperCase().replace(/\s/g, "_") ===
+            selectedBusinessUnit
+        );
+      }
+
+      setUpdatedConsents(filteredConsents);
+      setConfirmedConsents(filteredConsents);
     } else if (!customerData || error) {
       setUpdatedConsents(defaultContactMethods);
       setConfirmedConsents(defaultContactMethods);
@@ -85,38 +111,33 @@ export function Consents({
       setUpdatedConsents([]);
       setConfirmedConsents([]);
     }
-  }, [customerConsents, customerData, error, customerId]);
+    setLoading(false);
+  }, [customerConsents, customerData, error, selectedBusinessUnit, customerId]);
 
   const handleEdit = (id) => setEditingRowId(id);
 
   const handleStatusChange = (id, newStatus) => {
     setUpdatedConsents((prev) =>
       prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              status: newStatus,
-              statusType: newStatus.includes("Implicit")
-                ? "Implicit"
-                : "Explicit",
-            }
-          : c
+        c.id === id ? { ...c, status: newStatus, statusType: "Explicit" } : c
       )
     );
   };
 
   const handleSave = (id) => {
-    setConfirmedConsents(
-      updatedConsents.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              status: c.status.includes("Accepted") ? "Accepted" : "Declined",
-            }
-          : c
-      )
+    const newConsents = updatedConsents.map((c) =>
+      c.id === id
+        ? {
+            ...c,
+            status: c.status.includes("Accepted") ? "Accepted" : "Declined",
+            statusType: "Explicit",
+          }
+        : c
     );
+    setUpdatedConsents(newConsents);
+    setConfirmedConsents(newConsents);
     setEditingRowId(null);
+    console.log("Saved consent data:", newConsents);
   };
 
   const handleCancel = () => {
@@ -132,127 +153,156 @@ export function Consents({
     }));
     setUpdatedConsents(newConsents);
     setConfirmedConsents(newConsents);
+    console.log(`Updated all consents to ${action}:`, newConsents);
+    // TODO: Call backend API here
   };
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 2, p: 2 }}>
-      {/* Bulk action buttons at the top */}
-      {updatedConsents.length > 0 && (
+    <div>
+      {/* ================== Business Unit Dropdown ================== */}
+      <BusinessUnit
+        businessUnits={
+          customerData?.data?.businessUnits?.map((bu) => ({
+            label: bu.businessUnit,
+            value: bu.businessUnit.toUpperCase().replace(/\s/g, "_"),
+          })) || []
+        }
+        value={selectedBusinessUnit}
+        onChange={(val) => setSelectedBusinessUnit(val)}
+      />
+
+      {/* ================== Loader ================== */}
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {/* ================== Bulk Buttons ================== */}
+      {updatedConsents.length > 0 && !loading && (
         <Stack direction="row" spacing={2} mb={2}>
           <Button
             variant="contained"
             color="success"
-            onClick={() => handleUpdateAll("accept")}
             startIcon={<CheckIcon />}
+            onClick={() => handleUpdateAll("accept")}
           >
             Accept All
           </Button>
           <Button
             variant="contained"
             color="error"
-            onClick={() => handleUpdateAll("decline")}
             startIcon={<CancelIcon />}
+            onClick={() => handleUpdateAll("decline")}
           >
             Decline All
           </Button>
         </Stack>
       )}
 
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <strong>Contact Method</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Status</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Status Type</strong>
-            </TableCell>
-            <TableCell>
-              <strong>Actions</strong>
-            </TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {updatedConsents.length === 0 && customerData && !customerConsents ? (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
             <TableRow>
-              <TableCell
-                colSpan={4}
-                align="center"
-                sx={{ py: 4, color: "text.secondary" }}
-              >
-                <Typography variant="body1">Loading consent data...</Typography>
+              <TableCell>
+                <strong>Contact Method</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Status</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Status Type</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Actions</strong>
               </TableCell>
             </TableRow>
-          ) : (
-            updatedConsents.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell>
-                  <Typography variant="body2">{c.contactMethod}</Typography>
-                  {customerConsents &&
-                    customerConsents.data.businessUnits.length > 1 &&
-                    c.businessUnit && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        display="block"
-                      >
-                        {c.businessUnit}
-                      </Typography>
-                    )}
-                </TableCell>
+          </TableHead>
 
-                <TableCell>
-                  {editingRowId === c.id ? (
-                    <Select
-                      value={c.status}
-                      onChange={(e) => handleStatusChange(c.id, e.target.value)}
-                    >
-                      <MenuItem value="Accepted (Implicit)">Accepted</MenuItem>
-                      <MenuItem value="Accepted (Explicit)">Accepted</MenuItem>
-                      <MenuItem value="Declined (Implicit)">Declined</MenuItem>
-                      <MenuItem value="Declined (Explicit)">Declined</MenuItem>
-                    </Select>
-                  ) : (
-                    c.status
-                  )}
-                </TableCell>
-
-                <TableCell>{c.statusType}</TableCell>
-
-                <TableCell>
-                  {editingRowId === c.id ? (
-                    <>
-                      <IconButton
-                        color="success"
-                        onClick={() => handleSave(c.id)}
-                      >
-                        <SaveIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={handleCancel}>
-                        <CancelIcon />
-                      </IconButton>
-                    </>
-                  ) : (
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleEdit(c.id)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  )}
+          <TableBody>
+            {updatedConsents.length === 0 && !loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  align="center"
+                  sx={{ py: 4, color: "text.secondary" }}
+                >
+                  <Typography variant="body1">
+                    No consent data available
+                  </Typography>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              updatedConsents.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <Typography variant="body2">{c.contactMethod}</Typography>
+                    {customerConsents &&
+                      customerConsents.data.businessUnits.length > 1 &&
+                      c.businessUnit && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                        >
+                          {c.businessUnit}
+                        </Typography>
+                      )}
+                  </TableCell>
 
-      {/* Data source info */}
-      {customerConsents && (
+                  <TableCell>
+                    {editingRowId === c.id ? (
+                      <Select
+                        value={c.status}
+                        onChange={(e) =>
+                          handleStatusChange(c.id, e.target.value)
+                        }
+                      >
+                        <MenuItem value="Accepted">
+                          Accepted (Explicit)
+                        </MenuItem>
+                        <MenuItem value="Declined">
+                          Declined (Explicit)
+                        </MenuItem>
+                      </Select>
+                    ) : (
+                      c.status
+                    )}
+                  </TableCell>
+
+                  <TableCell>{c.statusType}</TableCell>
+
+                  <TableCell>
+                    {editingRowId === c.id ? (
+                      <>
+                        <IconButton
+                          color="success"
+                          onClick={() => handleSave(c.id)}
+                        >
+                          <SaveIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={handleCancel}>
+                          <CancelIcon />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleEdit(c.id)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Data Source Info */}
+      {customerConsents && !loading && (
         <Typography
           variant="caption"
           sx={{ p: 2, display: "block", color: "text.secondary" }}
@@ -264,6 +314,6 @@ export function Consents({
             .join(", ")}
         </Typography>
       )}
-    </TableContainer>
+    </div>
   );
 }
