@@ -49,5 +49,8 @@
   width: 30%;
 }
 
-.header-with-buttons {
+.filter-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
 }

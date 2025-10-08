@@ -22,6 +22,15 @@ import CheckIcon from "@mui/icons-material/Check";
 import { useState, useEffect } from "react";
 import BusinessUnit from "./BusinessUnit";
 
+// Global allowed business units (same for all customers)
+const GLOBAL_BUSINESS_UNITS = [
+  { label: "Sanlam Personal Loans", value: "SANLAM_PERSONAL_LOANS" },
+  { label: "Sanlam Life Insurance", value: "SANLAM_LIFE" },
+  { label: "Sanlam Rewards", value: "SANLAM_REWARDS" },
+  { label: "Sanlam Investment", value: "SANLAM_INVESTMENTS" },
+  { label: "Financial Planning", value: "FINANCIAL_PLANNING" },
+];
+
 export function Consents({
   customerData,
   customerConsents,
@@ -87,20 +96,22 @@ export function Consents({
     return transformed;
   };
 
-  // Load consents from API or default
+  // Load and filter consents
   useEffect(() => {
     setLoading(true);
+
     if (customerConsents) {
       const apiConsents = transformApiConsents(customerConsents);
 
-      let filteredConsents = apiConsents;
-      if (selectedBusinessUnit) {
-        filteredConsents = apiConsents.filter(
-          (c) =>
-            c.businessUnit.toUpperCase().replace(/\s/g, "_") ===
-            selectedBusinessUnit
-        );
-      }
+      // Filter by selected business unit
+      const filteredConsents = selectedBusinessUnit
+        ? apiConsents.filter((c) => {
+            const normalizedUnit = c.businessUnit
+              ? c.businessUnit.toUpperCase().replace(/\s/g, "_")
+              : "";
+            return normalizedUnit === selectedBusinessUnit;
+          })
+        : apiConsents;
 
       setUpdatedConsents(filteredConsents);
       setConfirmedConsents(filteredConsents);
@@ -111,6 +122,7 @@ export function Consents({
       setUpdatedConsents([]);
       setConfirmedConsents([]);
     }
+
     setLoading(false);
   }, [customerConsents, customerData, error, selectedBusinessUnit, customerId]);
 
@@ -159,18 +171,6 @@ export function Consents({
 
   return (
     <div>
-      {/* ================== Business Unit Dropdown ================== */}
-      <BusinessUnit
-        businessUnits={
-          customerData?.data?.businessUnits?.map((bu) => ({
-            label: bu.businessUnit,
-            value: bu.businessUnit.toUpperCase().replace(/\s/g, "_"),
-          })) || []
-        }
-        value={selectedBusinessUnit}
-        onChange={(val) => setSelectedBusinessUnit(val)}
-      />
-
       {/* ================== Loader ================== */}
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
@@ -178,27 +178,35 @@ export function Consents({
         </Box>
       )}
 
-      {/* ================== Bulk Buttons ================== */}
-      {updatedConsents.length > 0 && !loading && (
-        <Stack direction="row" spacing={2} mb={2}>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<CheckIcon />}
-            onClick={() => handleUpdateAll("accept")}
-          >
-            Accept All
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<CancelIcon />}
-            onClick={() => handleUpdateAll("decline")}
-          >
-            Decline All
-          </Button>
-        </Stack>
-      )}
+      <div className="filter-buttons">
+        {/* ================== Business Unit Dropdown ================== */}
+        <BusinessUnit
+          businessUnits={GLOBAL_BUSINESS_UNITS}
+          value={selectedBusinessUnit}
+          onChange={(val) => setSelectedBusinessUnit(val)}
+        />
+        {/* ================== Bulk Buttons ================== */}
+        {updatedConsents.length > 0 && !loading && (
+          <Stack direction="row" spacing={2} mb={2}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<CheckIcon />}
+              onClick={() => handleUpdateAll("accept")}
+            >
+              Accept All
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<CancelIcon />}
+              onClick={() => handleUpdateAll("decline")}
+            >
+              Decline All
+            </Button>
+          </Stack>
+        )}
+      </div>
 
       <TableContainer component={Paper}>
         <Table>
@@ -275,23 +283,34 @@ export function Consents({
                   <TableCell>
                     {editingRowId === c.id ? (
                       <>
-                        <IconButton
-                          color="success"
-                          onClick={() => handleSave(c.id)}
-                        >
-                          <SaveIcon />
-                        </IconButton>
-                        <IconButton color="error" onClick={handleCancel}>
-                          <CancelIcon />
-                        </IconButton>
+                        <Stack direction="row" spacing={2} mb={2}>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            onClick={() => handleSave(c.id)}
+                            startIcon={<SaveIcon />}
+                          >
+                            Confirm
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => handleCancel(c.id)}
+                            startIcon={<CancelIcon />}
+                          >
+                            Cancel
+                          </Button>
+                        </Stack>
                       </>
                     ) : (
-                      <IconButton
+                      <Button
+                        variant="contained"
                         color="primary"
+                        startIcon={<EditIcon />}
                         onClick={() => handleEdit(c.id)}
                       >
-                        <EditIcon />
-                      </IconButton>
+                        Edit
+                      </Button>
                     )}
                   </TableCell>
                 </TableRow>

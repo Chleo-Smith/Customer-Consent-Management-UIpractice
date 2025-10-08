@@ -243,46 +243,17 @@ export function Dashboard({ mode, toggleTheme }) {
             Managing consents for:{" "}
             <strong>{customerData.data.customerName}</strong>
           </Typography>
-
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<DoneIcon />}
-              sx={{
-                textTransform: "none",
-                fontWeight: "bold",
-                px: 3,
-                height: 40,
-              }}
-            >
-              Accept All
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<CloseIcon />}
-              sx={{
-                textTransform: "none",
-                fontWeight: "bold",
-                px: 3,
-                height: 40,
-              }}
-            >
-              Decline All
-            </Button>
-          </Stack>
         </Box>
       )}
 
-      {/* Business Unit Filter */}
+      {/* Business Unit Filter
       {customerData?.data.businessUnits?.length > 0 && (
         <BusinessUnit
           businessUnits={customerData.data.businessUnits}
           value={selectedUnit}
           onChange={setSelectedUnit}
         />
-      )}
+      )} */}
 
       {/* Consents Table */}
       {customerData && (

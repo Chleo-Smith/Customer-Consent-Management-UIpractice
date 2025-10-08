@@ -3,20 +3,22 @@
     {
       "customerId": "1234567890123",
       "isValid": true,
-      "customerName": "John Smith",
-      "businessUnit": "Personal Loans"
+      "customerName": "John Smith"
     },
     {
       "customerId": "9904157890123",
       "isValid": true,
-      "customerName": "Jane Doe",
-      "businessUnit": "Personal Loans"
+      "customerName": "Jane Doe"
     },
     {
       "customerId": "0002027890123",
       "isValid": true,
-      "customerName": "Ben Smith",
-      "businessUnit": "Personal Loans"
+      "customerName": "Ben Smith"
+    },
+        {
+      "customerId": "8502134567890",
+      "isValid": true,
+      "customerName": "Jill Peters"
     }
   ],
 
@@ -82,6 +84,36 @@
             {
               "contactMethod": "EMAIL",
               "status": "ACCEPTED",
+              "statusType": "EXPLICIT"
+            },
+            {
+              "contactMethod": "SMS",
+              "status": "DECLINED",
+              "statusType": "EXPLICIT"
+            },
+            {
+              "contactMethod": "PHONE",
+              "status": "ACCEPTED",
+              "statusType": "IMPLICIT"
+            },
+            {
+              "contactMethod": "POST",
+              "status": "DECLINED",
+              "statusType": "EXPLICIT"
+            },
+           {
+              "contactMethod": "AUTOMATED_VOICE_CALLS",
+              "status": "ACCEPTED",
+              "statusType": "IMPLICIT"
+            }
+          ]
+        }, 
+        {
+          "businessUnit": "Sanlam Life Insurance",
+          "consents": [
+            {
+              "contactMethod": "EMAIL",
+              "status": "DECLINED",
               "statusType": "EXPLICIT"
             },
             {
