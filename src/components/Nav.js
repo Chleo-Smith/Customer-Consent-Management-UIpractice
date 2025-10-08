@@ -13,11 +13,10 @@ import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import { Link } from "react-router-dom";
 
 // Multi-page setup (commented out)
-// const pages = [
-//   { label: "Home", path: "/" },
-//   { label: "Dashboard", path: "/dashboard" },
-//   { label: "Add Device", path: "/devices/new" },
-// ];
+const pages = [
+  { label: "Search", path: "/" },
+  { label: "Analytics", path: "/analytics" },
+];
 
 export function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -64,7 +63,6 @@ export function ResponsiveAppBar() {
           </Typography>
 
           {/* Mobile Menu */}
-          {/* 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
@@ -98,7 +96,6 @@ export function ResponsiveAppBar() {
               ))}
             </Menu>
           </Box>
-          */}
 
           {/* Mobile Logo */}
           <MarkEmailReadIcon
@@ -123,22 +120,28 @@ export function ResponsiveAppBar() {
             Sanlam Consents
           </Typography>
 
-          {/* Desktop Menu (commented out for now) */}
-          {/*
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+          {/* Desktop Menu */}
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, justifyContent: "flex-end" }}>
             {pages.map((page) => (
               <Button
                 key={page.label}
                 component={Link}
                 to={page.path}
                 onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: "white", display: "block" }}
+                sx={{ 
+                  my: 2, 
+                  color: "white", 
+                  display: "block",
+                  mx: 1,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  }
+                }}
               >
                 {page.label}
               </Button>
             ))}
           </Box>
-          */}
         </Toolbar>
       </Container>
     </AppBar>
