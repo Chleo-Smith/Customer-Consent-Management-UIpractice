@@ -57,6 +57,47 @@ module.exports = (req, res, next) => {
     return;
   }
 
+  // PUT update individual consent endpoint
+  if (
+    req.path.match(/^\/api\/consents\/\d{13}\/\d+$/) &&
+    req.method === "PUT"
+  ) {
+    const pathParts = req.path.split("/");
+    const customerId = pathParts[3];
+    const consentId = pathParts[4];
+
+    if (!isValidDateOfBirth(customerId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_DATE_OF_BIRTH",
+          message: "Invalid birth day entered",
+          customerId: customerId,
+        },
+      });
+    }
+
+    const { status, statusType } = req.body;
+
+    if (
+      !status ||
+      !statusType ||
+      (status !== "Declined" && status !== "Approved") ||
+      (statusType !== "Explicit" && statusType !== "Implicit")
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_CONSENT_DATA",
+          message: "Invalid status or statusType in request body",
+        },
+      });
+    }
+
+    updateConsentAPI(customerId, consentId, { status, statusType }, req, res);
+    return;
+  }
+
   next();
 };
 
@@ -348,6 +389,133 @@ function callMockCustomerConsentsAPI(customerId, req, res) {
         code: "DATABASE_ERROR",
         message: "Internal server error",
         customerId: customerId,
+      },
+    });
+  }
+}
+
+async function updateConsentAPI(customerId, consentId, consentData, req, res) {
+  const REAL_API_CONFIG = {
+    baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
+    timeout: 10000,
+    enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
+  };
+
+  try {
+    const apiResponse = await fetch(
+      `${REAL_API_CONFIG.baseUrl}/api/consents/${customerId}/${consentId}`,
+      {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "Sanlam-ConsentUI/1.0",
+        },
+        body: JSON.stringify(consentData),
+        timeout: REAL_API_CONFIG.timeout,
+      }
+    );
+
+    if (apiResponse.ok) {
+      const realApiData = await apiResponse.json();
+
+      return res.json({
+        success: true,
+        source: "real-api",
+        message: "Consent updated successfully",
+        data: realApiData.data || realApiData,
+      });
+    } else if (apiResponse.status === 404) {
+      return res.status(404).json({
+        success: false,
+        source: "real-api",
+        error: {
+          code: "CONSENT_NOT_FOUND",
+          message: "Consent not found",
+          customerId,
+          consentId,
+        },
+      });
+    } else {
+      console.error(
+        `Update Consent API error: ${apiResponse.status} ${apiResponse.statusText}`
+      );
+      throw new Error(
+        `API returned ${apiResponse.status}: ${apiResponse.statusText}`
+      );
+    }
+  } catch (error) {
+    console.error(`Update Consent API call failed:`, error.message);
+
+    if (REAL_API_CONFIG.enableFallback) {
+      return updateMockConsentAPI(customerId, consentId, consentData, req, res);
+    }
+
+    return res.status(500).json({
+      success: false,
+      source: "api-error",
+      error: {
+        code: "API_CONNECTION_ERROR",
+        message: "Unable to connect to Sanlam consents service",
+        customerId,
+        consentId,
+        details:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Service temporarily unavailable",
+      },
+    });
+  }
+}
+
+function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
+  try {
+    const consents = req.app.db.get("consents").value();
+
+    const consentIndex = consents.findIndex(
+      (c) => c.customerId === customerId && c.id.toString() === consentId
+    );
+
+    if (consentIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        source: "mock-fallback",
+        error: {
+          code: "CONSENT_NOT_FOUND",
+          message: "Mock API fallback: Consent not found",
+          customerId,
+          consentId,
+        },
+      });
+    }
+
+    req.app.db
+      .get("consents")
+      .nth(consentIndex)
+      .assign({
+        status: consentData.status,
+        statusType: consentData.statusType,
+        lastUpdated: new Date().toISOString(),
+      })
+      .write();
+
+    const updatedConsent = req.app.db.get("consents").nth(consentIndex).value();
+
+    return res.json({
+      success: true,
+      source: "mock-fallback",
+      message: "Consent updated successfully",
+      data: updatedConsent,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      source: "mock-error",
+      error: {
+        code: "DATABASE_ERROR",
+        message: "Internal server error",
+        customerId,
+        consentId,
       },
     });
   }
