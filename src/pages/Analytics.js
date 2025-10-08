@@ -21,11 +21,13 @@ export function Analytics() {
   const [loading, setLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState({
     businessUnitData: [],
+    contactMethodData: [],
     totalAccepted: 0,
     totalDeclined: 0,
     totalConsents: 0,
     implicitCount: 0,
     explicitCount: 0,
+    mostPreferredMethod: "",
   });
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export function Analytics() {
 
         // Process the data to create analytics
         const businessUnitStats = {};
+        const contactMethodStats = {};
         let totalAccepted = 0;
         let totalDeclined = 0;
         let totalConsents = 0;
@@ -60,6 +63,18 @@ export function Analytics() {
             bu.consents.forEach((c) => {
               totalConsents++;
 
+              // Track contact method statistics
+              if (!contactMethodStats[c.contactMethod]) {
+                contactMethodStats[c.contactMethod] = {
+                  contactMethod: c.contactMethod.replace("_", " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+                  accepted: 0,
+                  declined: 0,
+                  total: 0,
+                };
+              }
+
+              contactMethodStats[c.contactMethod].total++;
+
               // Count status types
               if (c.statusType === "IMPLICIT") {
                 implicitCount++;
@@ -70,9 +85,11 @@ export function Analytics() {
               // Count accepted/declined
               if (c.status === "ACCEPTED") {
                 businessUnitStats[businessUnit].accepted++;
+                contactMethodStats[c.contactMethod].accepted++;
                 totalAccepted++;
               } else if (c.status === "DECLINED") {
                 businessUnitStats[businessUnit].declined++;
+                contactMethodStats[c.contactMethod].declined++;
                 totalDeclined++;
               }
             });
@@ -80,6 +97,21 @@ export function Analytics() {
         });
 
         const businessUnitData = Object.values(businessUnitStats);
+        const contactMethodData = Object.values(contactMethodStats);
+
+        // Find most preferred contact method (highest acceptance rate)
+        let mostPreferredMethod = "";
+        let highestAcceptanceRate = 0;
+
+        contactMethodData.forEach((method) => {
+          if (method.total > 0) {
+            const acceptanceRate = (method.accepted / method.total) * 100;
+            if (acceptanceRate > highestAcceptanceRate) {
+              highestAcceptanceRate = acceptanceRate;
+              mostPreferredMethod = method.contactMethod;
+            }
+          }
+        });
 
         setAnalyticsData({
           businessUnitData,
@@ -131,19 +163,24 @@ export function Analytics() {
       <Box
         sx={{
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "space-between",
           mb: 4,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: "bold", mb: 3, textAlign: "center" }}
+        >
           Consent Analytics Dashboard
         </Typography>
 
         {/* Summary Cards in Header */}
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
           <Card sx={{ minWidth: 120 }}>
-            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+            <CardContent
+              sx={{ p: 2, "&:last-child": { pb: 2 }, textAlign: "center" }}
+            >
               <Typography color="textSecondary" gutterBottom variant="caption">
                 Accepted
               </Typography>
@@ -158,7 +195,9 @@ export function Analytics() {
           </Card>
 
           <Card sx={{ minWidth: 120 }}>
-            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+            <CardContent
+              sx={{ p: 2, "&:last-child": { pb: 2 }, textAlign: "center" }}
+            >
               <Typography color="textSecondary" gutterBottom variant="caption">
                 Declined
               </Typography>
@@ -173,7 +212,9 @@ export function Analytics() {
           </Card>
 
           <Card sx={{ minWidth: 120 }}>
-            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+            <CardContent
+              sx={{ p: 2, "&:last-child": { pb: 2 }, textAlign: "center" }}
+            >
               <Typography color="textSecondary" gutterBottom variant="caption">
                 Acceptance Rate
               </Typography>
@@ -189,7 +230,7 @@ export function Analytics() {
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ justifyContent: "center" }}>
         {/* Pie Chart - Left Side */}
         <Grid item xs={12} md={6}>
           <Paper
