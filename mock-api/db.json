@@ -82,33 +82,33 @@
           "consents": [
             {
               "contactMethod": "EMAIL",
-              "status": "DECLINED",
+              "status": "ACCEPTED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T18:24:17.778Z"
+              "lastUpdated": "2025-10-08T18:35:31.911Z"
             },
             {
               "contactMethod": "SMS",
               "status": "ACCEPTED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T18:24:17.787Z"
+              "lastUpdated": "2025-10-08T18:35:31.921Z"
             },
             {
               "contactMethod": "PHONE",
-              "status": "ACCEPTED",
-              "statusType": "IMPLICIT",
-              "lastUpdated": "2025-10-08T18:24:17.795Z"
+              "status": "DECLINED",
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:35:31.928Z"
             },
             {
               "contactMethod": "POST",
               "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T18:24:17.807Z"
+              "lastUpdated": "2025-10-08T18:35:31.938Z"
             },
             {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "ACCEPTED",
               "statusType": "IMPLICIT",
-              "lastUpdated": "2025-10-08T18:24:17.816Z"
+              "lastUpdated": "2025-10-08T18:35:31.948Z"
             }
           ]
         },
@@ -118,27 +118,32 @@
             {
               "contactMethod": "EMAIL",
               "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:36:10.424Z"
             },
             {
               "contactMethod": "SMS",
               "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:36:10.431Z"
             },
             {
               "contactMethod": "PHONE",
-              "status": "ACCEPTED",
-              "statusType": "IMPLICIT"
+              "status": "DECLINED",
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:36:10.441Z"
             },
             {
               "contactMethod": "POST",
               "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T18:36:10.450Z"
             },
             {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "ACCEPTED",
-              "statusType": "IMPLICIT"
+              "statusType": "IMPLICIT",
+              "lastUpdated": "2025-10-08T18:36:10.458Z"
             }
           ]
         }
