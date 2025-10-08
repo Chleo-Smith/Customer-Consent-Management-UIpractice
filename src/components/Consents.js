@@ -15,6 +15,13 @@ import {
   Stack,
   CircularProgress,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -59,6 +66,20 @@ export function Consents({
   const [loading, setLoading] = useState(true);
   const [savedRowIds, setSavedRowIds] = useState([]);
   const [modifiedBusinessUnits, setModifiedBusinessUnits] = useState([]);
+
+  // Dialog and notification states
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    message: "",
+    action: null,
+    actionParams: null,
+  });
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const contactMethodMap = {
     SMS: "SMS",
@@ -124,6 +145,61 @@ export function Consents({
     setLoading(false);
   }, [customerConsents, customerData, error, selectedBusinessUnit, customerId]);
 
+  // Dialog and notification handlers
+  const showConfirmDialog = (title, message, action, actionParams = null) => {
+    setConfirmDialog({
+      open: true,
+      title,
+      message,
+      action,
+      actionParams,
+    });
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmDialog({
+      open: false,
+      title: "",
+      message: "",
+      action: null,
+      actionParams: null,
+    });
+  };
+
+  const handleConfirmYes = async () => {
+    try {
+      if (confirmDialog.action) {
+        if (confirmDialog.actionParams) {
+          await confirmDialog.action(confirmDialog.actionParams);
+        } else {
+          await confirmDialog.action();
+        }
+        showNotification("Consents updated successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      showNotification("Failed to update consents. Please try again.", "error");
+    } finally {
+      handleConfirmClose();
+    }
+  };
+
+  const showNotification = (message, severity = "success") => {
+    setNotification({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const handleNotificationClose = () => {
+    setNotification({
+      open: false,
+      message: "",
+      severity: "success",
+    });
+  };
+
   const handleEdit = (id) => setEditingRowId(id);
 
   const handleStatusChange = (id, newStatus) => {
@@ -165,7 +241,8 @@ export function Consents({
     setEditingRowId(null);
   };
 
-  const handleUpdateAll = (action) => {
+  // Original functions (now called after confirmation)
+  const executeUpdateAll = (action) => {
     const newConsents = updatedConsents.map((c) => ({
       ...c,
       status: action === "accept" ? "Accepted" : "Declined",
@@ -181,7 +258,28 @@ export function Consents({
     console.log(`Updated all consents to ${action}:`, newConsents);
   };
 
-  const handleUpdateBusinessUnit = async (businessUnit) => {
+  // Functions that show confirmation dialogs
+  const handleUpdateAll = (action) => {
+    const actionText = action === "accept" ? "accept" : "decline";
+    const actionLabel = action === "accept" ? "Accept" : "Decline";
+
+    showConfirmDialog(
+      "Confirm",
+      `Are you sure you want to ${actionText} all consents?`,
+      () => executeUpdateAll(action)
+    );
+  };
+
+  const handleUpdateBusinessUnitWithConfirm = (businessUnit) => {
+    showConfirmDialog(
+      "Confirm",
+      `Are you sure you want to update consents for ${businessUnit}?`,
+      executeUpdateBusinessUnit,
+      businessUnit
+    );
+  };
+
+  const executeUpdateBusinessUnit = async (businessUnit) => {
     const consentsToUpdate = updatedConsents.filter(
       (c) => c.businessUnit === businessUnit
     );
@@ -401,7 +499,7 @@ export function Consents({
                             variant="outlined"
                             color="primary"
                             onClick={() =>
-                              handleUpdateBusinessUnit(businessUnit)
+                              handleUpdateBusinessUnitWithConfirm(businessUnit)
                             }
                           >
                             Update {businessUnit}
@@ -429,6 +527,74 @@ export function Consents({
             .join(", ")}
         </Typography>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleConfirmClose}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          id="confirm-dialog-title"
+          sx={{
+            fontWeight: "bold",
+            borderBottom: "1px solid #e0e0e0",
+            pb: 2,
+          }}
+        >
+          {confirmDialog.title}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <DialogContentText
+            id="confirm-dialog-description"
+            sx={{
+              fontSize: "1rem",
+              color: "text.primary",
+              pt: 2,
+            }}
+          >
+            {confirmDialog.message}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button
+            onClick={handleConfirmClose}
+            variant="outlined"
+            sx={{ minWidth: 80 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmYes}
+            variant="contained"
+            color="primary"
+            sx={{ minWidth: 80 }}
+            autoFocus
+          >
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success/Error Notification */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleNotificationClose}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
