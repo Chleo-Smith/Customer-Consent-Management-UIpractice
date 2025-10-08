@@ -310,13 +310,13 @@ export function Analytics() {
                           id: 0,
                           value: implicitCount,
                           label: "Implicit",
-                          color: "#9c27b0",
+                          color: "#98bddaff",
                         },
                         {
                           id: 1,
                           value: explicitCount,
                           label: "Explicit",
-                          color: "#ff9800",
+                          color: "#176ed1ff",
                         },
                       ],
                     },
@@ -375,12 +375,12 @@ export function Analytics() {
                     {
                       dataKey: "accepted",
                       label: "Accepted",
-                      color: "#4caf50",
+                      color: "#176ed1ff",
                     },
                     {
                       dataKey: "declined",
                       label: "Declined",
-                      color: "#f44336",
+                      color: "#98bddaff",
                     },
                   ]}
                   width={550}
@@ -443,7 +443,7 @@ export function Analytics() {
                     {
                       dataKey: "declined",
                       label: "Declined",
-                      color: "#ff5722",
+                      color: "#98bddaff",
                     },
                   ]}
                   width={900}
