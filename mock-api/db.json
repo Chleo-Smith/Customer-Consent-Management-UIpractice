@@ -82,33 +82,33 @@
           "consents": [
             {
               "contactMethod": "EMAIL",
-              "status": "ACCEPTED",
+              "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T23:33:57.635Z"
+              "lastUpdated": "2025-10-09T08:02:53.137Z"
             },
             {
               "contactMethod": "SMS",
               "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T23:33:57.650Z"
+              "lastUpdated": "2025-10-09T08:02:52.852Z"
             },
             {
               "contactMethod": "PHONE",
               "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T23:33:57.669Z"
+              "lastUpdated": "2025-10-09T08:02:53.131Z"
             },
             {
               "contactMethod": "POST",
               "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T23:33:57.679Z"
+              "lastUpdated": "2025-10-09T08:02:52.872Z"
             },
             {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T23:33:57.686Z"
+              "lastUpdated": "2025-10-09T08:02:53.147Z"
             }
           ]
         },

@@ -21,18 +21,25 @@
     "react-router-dom": "^7.9.3",
     "react-scripts": "^5.0.1",
     "styled-components": "^6.1.19",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "json-server": "^0.17.4",
+    "lowdb": "^1.0.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "json-server": "^0.17.4"
+    "http-proxy-middleware": "^2.0.6"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "node server.js",
     "server": "node server.js",
     "dev": "concurrently \"npm start\" \"npm run server\"",
     "build": "react-scripts build",
-    "test": "react-scripts test"
+    "test": "react-scripts test",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": "16.x",
+    "npm": "8.x"
   },
   "eslintConfig": {
     "extends": [

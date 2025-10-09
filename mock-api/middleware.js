@@ -7,8 +7,7 @@ module.exports = (req, res, next) => {
   console.log("Path:", req.path);
   console.log("Body:", req.body);
 
-  // cross origin resouce sharing
-  // allows communication between frontend and backend
+  // cross origin resource sharing
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Methods",
@@ -26,14 +25,12 @@ module.exports = (req, res, next) => {
     return;
   }
 
-  //middleware for customer validation endpoint
+  // middleware for customer validation endpoint
   if (req.path.match(/^\/api\/customer\/\d{13}$/) && req.method === "GET") {
-    // extract customer ID from URL path
     const pathParts = req.path.split("/");
     const customerIndex = pathParts.indexOf("customer") + 1;
     const customerId = pathParts[customerIndex];
 
-    //check if first 6 digits is valid date format
     if (!isValidDateOfBirth(customerId)) {
       return res.status(400).json({
         success: false,
@@ -54,13 +51,11 @@ module.exports = (req, res, next) => {
     req.path.match(/^\/api\/consents\/[a-zA-Z0-9\-]{13,}$/) &&
     req.method === "GET"
   ) {
-    //get customer ID from URL path
     const pathParts = req.path.split("/");
     const consentsIndex = pathParts.indexOf("consents") + 1;
     const customerId = pathParts[consentsIndex];
 
     callCustomerConsentsAPI(customerId, req, res);
-
     return;
   }
 
@@ -81,7 +76,6 @@ module.exports = (req, res, next) => {
     console.log("Status:", status);
     console.log("StatusType:", statusType);
 
-    // More flexible validation
     if (
       !status ||
       !statusType ||
@@ -97,14 +91,8 @@ module.exports = (req, res, next) => {
       });
     }
 
-    // Skip real API for now, go straight to mock
-    updateMockConsentAPI(
-      customerId,
-      consentId,
-      { status, statusType },
-      req,
-      res
-    );
+    // Try real API first, then fallback to mock
+    updateConsentAPI(customerId, consentId, { status, statusType }, req, res);
     return;
   }
 
@@ -112,10 +100,9 @@ module.exports = (req, res, next) => {
 };
 
 async function callCustomerIdAPI(nationalId, req, res) {
-  // configuration for the real API
   const REAL_API_CONFIG = {
     baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
-    timeout: 10000, // 10 seconds
+    timeout: 10000,
     enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
   };
 
@@ -126,9 +113,10 @@ async function callCustomerIdAPI(nationalId, req, res) {
   );
 
   try {
-    console.log(`${REAL_API_CONFIG.baseUrl}/api/customer/${nationalId}`);
+    console.log(
+      `Calling: ${REAL_API_CONFIG.baseUrl}/api/customer/${nationalId}`
+    );
 
-    // call the real AWS API endpoint
     const apiResponse = await fetch(
       `${REAL_API_CONFIG.baseUrl}/api/customer/${nationalId}`,
       {
@@ -158,14 +146,21 @@ async function callCustomerIdAPI(nationalId, req, res) {
         throw new Error("Invalid JSON response from API");
       }
 
-      // Validate the response structure
+      // Check if the API returned an error (even with 200 status)
+      if (realApiData.error) {
+        console.error("API returned error:", realApiData.error);
+        throw new Error(
+          `API error: ${
+            realApiData.error.detail || JSON.stringify(realApiData.error)
+          }`
+        );
+      }
+
       if (!realApiData?.data?.customerId) {
-        console.error("API response missing required data. Structure:", {
-          hasData: !!realApiData?.data,
-          hasCustomerId: !!realApiData?.data?.customerId,
-          dataKeys: realApiData?.data ? Object.keys(realApiData.data) : [],
-          fullResponse: realApiData,
-        });
+        console.error(
+          "API response missing required data. Full response:",
+          JSON.stringify(realApiData, null, 2)
+        );
         throw new Error("Invalid API response structure");
       }
 
@@ -181,7 +176,6 @@ async function callCustomerIdAPI(nationalId, req, res) {
 
       return res.json(transformedResponse);
     } else if (apiResponse.status === 404) {
-      // if customer not found in system
       return res.status(404).json({
         success: false,
         source: "real-api",
@@ -192,7 +186,6 @@ async function callCustomerIdAPI(nationalId, req, res) {
         },
       });
     } else {
-      // API errors
       console.error(
         `API error: ${apiResponse.status} ${apiResponse.statusText}`
       );
@@ -203,14 +196,12 @@ async function callCustomerIdAPI(nationalId, req, res) {
   } catch (error) {
     clearTimeout(timeoutId);
     console.error(`API call failed:`, error.message);
-    console.error(`Error stack:`, error.stack);
 
-    // fallback to mock data if enabled
     if (REAL_API_CONFIG.enableFallback) {
+      console.log("Falling back to mock customer API...");
       return callMockCustomerAPI(nationalId, req, res);
     }
 
-    // return error if no fallback enabled
     return res.status(500).json({
       success: false,
       source: "api-error",
@@ -227,10 +218,8 @@ async function callCustomerIdAPI(nationalId, req, res) {
   }
 }
 
-//mock api call
 function callMockCustomerAPI(nationalId, req, res) {
   try {
-    // Check if database is available
     if (!req.app.db) {
       console.error("Database not initialized on req.app.db");
       return res.status(500).json({
@@ -244,7 +233,6 @@ function callMockCustomerAPI(nationalId, req, res) {
       });
     }
 
-    // mock database logic
     const customers = req.app.db.get("customers").value();
     const customer = customers.find((c) => c.customerId === nationalId);
 
@@ -286,58 +274,37 @@ function callMockCustomerAPI(nationalId, req, res) {
 }
 
 function isValidDateOfBirth(idNumber) {
-  // extract birth date (YYMMDD)
   const date = idNumber.substring(0, 6);
-
-  // extract year, month and day
   const year = parseInt(date.substring(0, 2), 10);
   const month = parseInt(date.substring(2, 4), 10);
   const day = parseInt(date.substring(4, 6), 10);
 
-  //if not valid month value
-  if (month < 1 || month > 12) {
-    return false;
-  }
+  if (month < 1 || month > 12) return false;
+  if (day < 1 || day > 31) return false;
 
-  //if not valid day value
-  if (day < 1 || day > 31) {
-    return false;
-  }
-
-  //determine full year
   const fullYear = year >= 50 ? 1900 + year : 2000 + year;
-
   const testDate = new Date(fullYear, month - 1, day);
   const isValidDate =
     testDate.getFullYear() === fullYear &&
     testDate.getMonth() === month - 1 &&
     testDate.getDate() === day;
 
-  if (!isValidDate) {
-    return false;
-  }
+  if (!isValidDate) return false;
 
   const currentDate = new Date();
-
-  if (testDate > currentDate) {
-    return false;
-  }
+  if (testDate > currentDate) return false;
 
   const maxAge = 120;
   const minBirthYear = currentDate.getFullYear() - maxAge;
-
-  if (fullYear < minBirthYear) {
-    return false;
-  }
+  if (fullYear < minBirthYear) return false;
 
   return true;
 }
 
 async function callCustomerConsentsAPI(customerId, req, res) {
-  //API configuration
   const REAL_API_CONFIG = {
     baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
-    timeout: 10000, // 10 seconds
+    timeout: 10000,
     enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
   };
 
@@ -348,7 +315,6 @@ async function callCustomerConsentsAPI(customerId, req, res) {
   );
 
   try {
-    // call the real AWS API endpoint
     const apiResponse = await fetch(
       `${REAL_API_CONFIG.baseUrl}/api/consents/${customerId}`,
       {
@@ -378,25 +344,11 @@ async function callCustomerConsentsAPI(customerId, req, res) {
         throw new Error("Invalid JSON response from consents API");
       }
 
-      console.log(
-        "Parsed consents API data:",
-        JSON.stringify(realApiData, null, 2)
-      );
-
-      // Validate the response structure
       if (!realApiData?.data?.businessUnits) {
-        console.error(
-          "Consents API response missing required data. Structure:",
-          {
-            hasData: !!realApiData?.data,
-            hasBusinessUnits: !!realApiData?.data?.businessUnits,
-            fullResponse: realApiData,
-          }
-        );
+        console.error("Consents API response missing required data");
         throw new Error("Invalid consents API response structure");
       }
 
-      // Transform the response to match expected format
       const transformedResponse = {
         success: realApiData.success || true,
         source: "real-api",
@@ -408,7 +360,6 @@ async function callCustomerConsentsAPI(customerId, req, res) {
 
       return res.json(transformedResponse);
     } else if (apiResponse.status === 404) {
-      // Customer consents not found
       return res.status(404).json({
         success: false,
         source: "real-api",
@@ -419,7 +370,6 @@ async function callCustomerConsentsAPI(customerId, req, res) {
         },
       });
     } else {
-      // API errors
       console.error(
         `Consents API error: ${apiResponse.status} ${apiResponse.statusText}`
       );
@@ -431,13 +381,11 @@ async function callCustomerConsentsAPI(customerId, req, res) {
     clearTimeout(timeoutId);
     console.error(`Consents API call failed:`, error.message);
 
-    // fallback to mock data if enabled
     if (REAL_API_CONFIG.enableFallback) {
       console.log("Falling back to mock consents API...");
       return callMockCustomerConsentsAPI(customerId, req, res);
     }
 
-    // return error if no fallback enabled
     return res.status(500).json({
       success: false,
       source: "api-error",
@@ -456,7 +404,6 @@ async function callCustomerConsentsAPI(customerId, req, res) {
 
 function callMockCustomerConsentsAPI(customerId, req, res) {
   try {
-    // Check if database is available
     if (!req.app.db) {
       console.error("Database not initialized on req.app.db");
       return res.status(500).json({
@@ -495,7 +442,6 @@ function callMockCustomerConsentsAPI(customerId, req, res) {
     }
   } catch (error) {
     console.error(`Mock consents API error:`, error);
-
     return res.status(500).json({
       success: false,
       source: "mock-error",
@@ -509,6 +455,84 @@ function callMockCustomerConsentsAPI(customerId, req, res) {
   }
 }
 
+// NEW: Try real API first, then fallback to mock
+async function updateConsentAPI(customerId, consentId, consentData, req, res) {
+  const REAL_API_CONFIG = {
+    baseUrl: "https://owafrdb867.execute-api.eu-west-1.amazonaws.com/sbx",
+    timeout: 10000,
+    enableFallback: process.env.ENABLE_MOCK_FALLBACK !== "false",
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    REAL_API_CONFIG.timeout
+  );
+
+  try {
+    console.log(
+      `Calling: ${REAL_API_CONFIG.baseUrl}/api/consents/${customerId}/${consentId}`
+    );
+
+    const apiResponse = await fetch(
+      `${REAL_API_CONFIG.baseUrl}/api/consents/${customerId}/${consentId}`,
+      {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "Sanlam-ConsentUI/1.0",
+        },
+        body: JSON.stringify(consentData),
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (apiResponse.ok) {
+      const result = await apiResponse.json();
+      console.log("Real API update successful:", result);
+      return res.json({
+        success: true,
+        source: "real-api",
+        message: "Consent updated successfully",
+        data: result,
+      });
+    } else {
+      console.error(
+        `Update API error: ${apiResponse.status} ${apiResponse.statusText}`
+      );
+      throw new Error(
+        `API returned ${apiResponse.status}: ${apiResponse.statusText}`
+      );
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error(`Update API call failed:`, error.message);
+
+    if (REAL_API_CONFIG.enableFallback) {
+      console.log("Falling back to mock update API...");
+      return updateMockConsentAPI(customerId, consentId, consentData, req, res);
+    }
+
+    return res.status(500).json({
+      success: false,
+      source: "api-error",
+      error: {
+        code: "API_CONNECTION_ERROR",
+        message: "Unable to update consent",
+        customerId: customerId,
+        consentId: consentId,
+        details:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Service temporarily unavailable",
+      },
+    });
+  }
+}
+
 function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
   try {
     console.log("=== updateMockConsentAPI called ===");
@@ -516,14 +540,22 @@ function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
     console.log("consentId:", consentId);
     console.log("consentData:", consentData);
 
-    const consents = req.app.db.get("consents").value();
+    if (!req.app.db) {
+      console.error("Database not initialized");
+      return res.status(500).json({
+        success: false,
+        source: "mock-error",
+        error: {
+          code: "DATABASE_NOT_INITIALIZED",
+          message: "Mock database is not available",
+        },
+      });
+    }
 
-    // Find the consent record for this customer
+    const consents = req.app.db.get("consents").value();
     const customerConsentRecord = consents.find(
       (c) => c.customerId === customerId
     );
-
-    console.log("Found customer record:", customerConsentRecord ? "YES" : "NO");
 
     if (!customerConsentRecord) {
       return res.status(404).json({
@@ -531,20 +563,15 @@ function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
         source: "mock-fallback",
         error: {
           code: "CONSENT_NOT_FOUND",
-          message: "Mock API fallback: No consent record found for customer",
+          message: "No consent record found for customer",
           customerId,
           consentId,
         },
       });
     }
 
-    // Parse consentId to get the consent index
-    // The frontend sends IDs like "1", "2", "3", etc.
+    // Find the consent by its ID across all business units
     const consentIndex = parseInt(consentId, 10) - 1;
-
-    console.log("Looking for consent at index:", consentIndex);
-
-    // Flatten all consents from all business units to find the right one
     let currentIndex = 0;
     let foundBusinessUnitIndex = -1;
     let foundConsentIndex = -1;
@@ -555,7 +582,6 @@ function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
       buIndex++
     ) {
       const businessUnit = customerConsentRecord.businessUnits[buIndex];
-
       for (let cIndex = 0; cIndex < businessUnit.consents.length; cIndex++) {
         if (currentIndex === consentIndex) {
           foundBusinessUnitIndex = buIndex;
@@ -564,16 +590,8 @@ function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
         }
         currentIndex++;
       }
-
       if (foundBusinessUnitIndex !== -1) break;
     }
-
-    console.log(
-      "Found at businessUnit:",
-      foundBusinessUnitIndex,
-      "consent:",
-      foundConsentIndex
-    );
 
     if (foundBusinessUnitIndex === -1 || foundConsentIndex === -1) {
       return res.status(404).json({
@@ -581,36 +599,21 @@ function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
         source: "mock-fallback",
         error: {
           code: "CONSENT_NOT_FOUND",
-          message: "Mock API fallback: Consent not found at specified index",
+          message: "Consent not found at specified index",
           customerId,
           consentId,
         },
       });
     }
 
-    // Get the record index in the consents array
-    const recordIndex = consents.findIndex((c) => c.customerId === customerId);
-
-    // Update the specific consent
-    const normalizedStatus =
-      consentData.status === "Accepted" || consentData.status === "ACCEPTED"
-        ? "ACCEPTED"
-        : "DECLINED";
-
+    // Normalize the status values
+    const normalizedStatus = consentData.status.toUpperCase();
     const normalizedStatusType = consentData.statusType.toUpperCase();
 
-    const updatedConsent = {
-      ...customerConsentRecord.businessUnits[foundBusinessUnitIndex].consents[
-        foundConsentIndex
-      ],
-      status: normalizedStatus,
-      statusType: normalizedStatusType,
-      lastUpdated: new Date().toISOString(),
-    };
+    // Find the record index
+    const recordIndex = consents.findIndex((c) => c.customerId === customerId);
 
-    console.log("Updating consent to:", updatedConsent);
-
-    // Update in the database
+    // Update the consent in the database
     req.app.db
       .get("consents")
       .nth(recordIndex)
@@ -624,6 +627,17 @@ function updateMockConsentAPI(customerId, consentId, consentData, req, res) {
         lastUpdated: new Date().toISOString(),
       })
       .write();
+
+    console.log("Mock database updated successfully");
+
+    const updatedConsent = req.app.db
+      .get("consents")
+      .nth(recordIndex)
+      .get("businessUnits")
+      .nth(foundBusinessUnitIndex)
+      .get("consents")
+      .nth(foundConsentIndex)
+      .value();
 
     return res.json({
       success: true,

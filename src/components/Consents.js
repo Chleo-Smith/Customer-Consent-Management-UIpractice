@@ -29,6 +29,9 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import CheckIcon from "@mui/icons-material/Check";
 import BusinessUnit from "./BusinessUnit";
 
+// API Base URL - uses environment variable or defaults to /api
+const API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
+
 const GLOBAL_BUSINESS_UNITS = [
   { label: "Sanlam Personal Loans", value: "SANLAM_PERSONAL_LOANS" },
   { label: "Sanlam Life Insurance", value: "SANLAM_LIFE" },
@@ -261,7 +264,6 @@ export function Consents({
   // Functions that show confirmation dialogs
   const handleUpdateAll = (action) => {
     const actionText = action === "accept" ? "accept" : "decline";
-    const actionLabel = action === "accept" ? "Accept" : "Decline";
 
     showConfirmDialog(
       "Confirm",
@@ -290,8 +292,9 @@ export function Consents({
           ? "Accepted"
           : "Declined";
 
+        // UPDATED: Using environment variable for API URL
         const response = await fetch(
-          `http://localhost:3001/api/consents/${customerId}/${consent.id}`,
+          `${API_BASE_URL}/consents/${customerId}/${consent.id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -320,10 +323,13 @@ export function Consents({
       setModifiedBusinessUnits((prev) =>
         prev.filter((bu) => bu !== businessUnit)
       );
-      alert(`Successfully updated all consents for ${businessUnit}`);
+      showNotification(
+        `Successfully updated all consents for ${businessUnit}`,
+        "success"
+      );
     } catch (err) {
       console.error("Error updating consents:", err);
-      alert(`Error updating consents: ${err.message}`);
+      showNotification(`Error updating consents: ${err.message}`, "error");
     }
   };
 

@@ -32,10 +32,7 @@ export default function App() {
             path="/"
             element={<Dashboard mode={mode} toggleTheme={toggleTheme} />}
           />
-          <Route
-            path="/analytics"
-            element={<Analytics />}
-          />
+          <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </div>
     </ThemeProvider>
