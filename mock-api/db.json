@@ -8,7 +8,7 @@
     {
       "customerId": "9904157890123",
       "isValid": true,
-      "customerName": "Jane Doe"
+      "customerName": "Jill Peters"
     },
     {
       "customerId": "0002027890123",
@@ -18,7 +18,7 @@
     {
       "customerId": "8502134567890",
       "isValid": true,
-      "customerName": "Jill Peters"
+      "customerName": "Chleo Smith"
     }
   ],
   "consents": [
@@ -83,8 +83,7 @@
             {
               "contactMethod": "EMAIL",
               "status": "ACCEPTED",
-              "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T23:33:57.635Z"
+              "statusType": "IMPLICIT"
             },
             {
               "contactMethod": "SMS",
@@ -161,9 +160,8 @@
           "consents": [
             {
               "contactMethod": "EMAIL",
-              "status": "DECLINED",
-              "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T20:06:11.680Z"
+              "status": "ACCEPTED",
+              "statusType": "IMPLICIT"
             },
             {
               "contactMethod": "SMS",
@@ -175,7 +173,19 @@
               "contactMethod": "PHONE",
               "status": "DECLINED",
               "statusType": "EXPLICIT",
-              "lastUpdated": "2025-10-08T20:06:11.695Z"
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
+            },
+                        {
+              "contactMethod": "POST",
+              "status": "DECLINED",
+              "statusType": "EXPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
+            },
+           {
+              "contactMethod": "AUTOMATED_VOICE_CALLS",
+              "status": "DECLINED",
+              "statusType": "EXPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             }
           ]
         },
@@ -185,12 +195,14 @@
             {
               "contactMethod": "POST",
               "status": "ACCEPTED",
-              "statusType": "IMPLICIT"
+              "statusType": "IMPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             },
             {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             }
           ]
         }
@@ -206,27 +218,32 @@
             {
               "contactMethod": "EMAIL",
               "status": "ACCEPTED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             },
             {
               "contactMethod": "SMS",
               "status": "ACCEPTED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+              "lastUpdated": "2025-10-08T20:06:11.687Z"
             },
             {
               "contactMethod": "PHONE",
               "status": "ACCEPTED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             },
             {
               "contactMethod": "POST",
               "status": "ACCEPTED",
-              "statusType": "IMPLICIT"
+              "statusType": "IMPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             },
             {
               "contactMethod": "AUTOMATED_VOICE_CALLS",
               "status": "DECLINED",
-              "statusType": "EXPLICIT"
+              "statusType": "EXPLICIT",
+                            "lastUpdated": "2025-10-08T20:06:11.687Z"
             }
           ]
         }
